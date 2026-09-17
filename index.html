@@ -670,9 +670,30 @@ const STATUS_LABEL = {ok:'Em dia', warn:'Atenção', danger:'Vencido'};
 /* ---------- ROUTER ---------- */
 let ROUTE = {view:'dashboard'};
 function nav(view, params){ ROUTE = {view, ...params}; location.hash = view; render(); window.scrollTo(0,0); }
+
+// Converte o hash da URL em ROUTE, suportando o formato gerado pelo QR Code:
+// #inspecao-form/EXT-0001 → {view:'inspecao-form', id: id_do_extintor}
+function parseHash(hash){
+  const raw = hash.replace('#','') || 'dashboard';
+  // formato QR: inspecao-form/EXT-0001
+  const qrMatch = raw.match(/^inspecao-form\/(.+)$/);
+  if(qrMatch){
+    const codigo = qrMatch[1].trim();
+    const ext = DB.extintores.find(e=> e.codigo.toLowerCase()===codigo.toLowerCase());
+    if(ext) return {view:'inspecao-form', id: ext.id};
+    // código não encontrado — vai para hub de inspeção com aviso
+    return {view:'inspecao', _notFound: codigo};
+  }
+  return {view: raw};
+}
+
 window.addEventListener('hashchange', ()=>{
-  const v = location.hash.replace('#','') || 'dashboard';
-  if(!ROUTE.view || ROUTE.view!==v) { ROUTE = {view:v}; render(); }
+  const parsed = parseHash(location.hash);
+  if(!ROUTE.view || ROUTE.view !== parsed.view){
+    ROUTE = parsed;
+    if(parsed._notFound) toast('Extintor "'+parsed._notFound+'" não encontrado. Verifique o cadastro.');
+    render();
+  }
 });
 
 /* ---------- TOAST ---------- */
@@ -1056,6 +1077,15 @@ function historyRow(h){
 function qrSvg(text, cellSize){
   return QR.toSvg(text, cellSize||5, 3);
 }
+
+/* URL base do app — usada para gerar QR Codes com link direto.
+   Quando hospedado em https://, a câmera nativa do celular abre o
+   formulário de inspeção diretamente ao escanear. */
+const APP_BASE_URL = 'https://diegovieira-prog.github.io/extintores';
+
+function qrUrlParaExtintor(codigo){
+  return APP_BASE_URL + '#inspecao-form/' + codigo;
+}
 function renderExtintorQR(id, fresh){
   const ext = DB.extintores.find(e=>e.id===id);
   if(!ext){ nav('extintores'); return; }
@@ -1067,7 +1097,7 @@ function renderExtintorQR(id, fresh){
       <button class="btn btn-primary" id="btn-print">${ICONS.print}Imprimir etiqueta</button>
     </div>
     <div class="printtag" style="width:220px;">
-      <div class="qr-inner">${qrSvg(ext.codigo, 6)}</div>
+      <div class="qr-inner">${qrSvg(qrUrlParaExtintor(ext.codigo), 6)}</div>
       <div class="pt-code">${ext.codigo}</div>
       <div class="pt-name">${local?local.nome:''}</div>
       <div class="pt-org">${DB.org} · Combate a incêndio</div>
@@ -1096,7 +1126,7 @@ function renderQRCodesPage(){
       ${list.map(e=>{
         const local = DB.locais.find(l=>l.id===e.localId);
         return `<div class="printtag">
-          ${qrSvg(e.codigo,4)}
+          ${qrSvg(qrUrlParaExtintor(e.codigo),4)}
           <div class="pt-code">${e.codigo}</div>
           <div class="pt-name">${local?local.nome:''}</div>
           <div class="pt-org">${DB.org} · Combate a incêndio</div>
@@ -1460,8 +1490,8 @@ function render(){
 
 /* ---------- INIT ---------- */
 (function init(){
-  const v = location.hash.replace('#','');
-  ROUTE = {view: v || 'dashboard'};
+  ROUTE = parseHash(location.hash);
+  if(ROUTE._notFound) toast('Extintor "'+ROUTE._notFound+'" não encontrado. Verifique o cadastro.');
   render();
 })();
 </script>
