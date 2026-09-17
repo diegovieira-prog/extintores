@@ -1,0 +1,1469 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" sizes="180x180" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAYAAAA9zQYyAAADsUlEQVR4nO3dOVIbURiFUUnFKghJvQ1iFkvMNkgJ2QYObFEMGrrf0K/76pzYlhR8XP+Sqsx+twL3f54+Rr8G6r2/Pu9Hv4YhL0DAt2FE4Is9oYhv21Jxd30SEXNKz7i7PLCQmaJH2IfWDyhmpurRSrOfECFTo9VaN1loMVOrVUNVPxVCpoeatS5eaDHTS01bRUGLmd5KG5sdtJhZSklrs4IWM0ub29zkoMXMKHPamxS0mBltaoNXgxYzazGlxeZffcNIF4O2zqzNtSbPBi1m1upSm04OopwM2jqzduca/RW0mNmKU606OYjyLWjrzNb8bNZCE0XQRPkM2rnBVn1t10ITRdBEOex2zg2279iwhSaKoIkiaKLs3c8ksdBEETRRBE0UQRNF0EQRNFHuRr+AZC9v5z8RfXwY/iv9Igm6sUsRn/tz4m7HydHQ1Jhb/T1+s9ANtAjy+BjWuo6FrtR6Xa11HUFX6BWfqMsJmiiCLtR7Ra10GUEXWCo2Uc8naKIImiiCnmnpM8DZMY+giSJoogiaKIImiqCJImiiCJoogiaKoIkiaKIImiiCJoqgiSJoogiaKIImiqCJImiiCJoogiaKoIkiaKIImiiCJoqgiSJoogiaKIImiqCJImiiCJoogiaKoIkiaKIImiiCJoqgiSJoogiaKIImiqCJImiiCJoogiaKoIkiaKIImiiCJoqgiSJoogiaKIImiqCJImiiCJoogiaKoIkiaKIImiiCJoqgiSJoogiaKIImiqCJImiiCJoogiaKoIkiaKIImiiCJoqgiSJoogiaKIImiqCJImiiCHqmx4d99PNtnaCJImiiCLrAUmeAc2M+QRfqHZuYywiaKIKu0GtFrXM5QVdqHZ+Y69yNfgEJjhG+vH1UPwZ1LHRDpVGKuR0L3djXOC8ttoj7EHRHol2ek4MogiaKoIkiaKIImiiH99dnb8WJ8P76vLfQRBE0UQRNlMNu9+/2GP1CoMaxYQtNFEET5TNoZwdb9bVdC00UQRPlW9DODrbmZ7MWmii/grbSbMWpVk8utKhZu3ONOjmIcjZoK81aXWrz4kKLmrW51qSTgyhXg7bSrMWUFicttKgZbWqDk08OUTPKnPZm3dCiZmlzm5v9plDULKWktaJPOURNb6WNFX9sJ2p6qWmrSZT3f57K/+t6+K/FSDb5YsVaU6tVQ81DtNbM0XoMm3/1ba2ZqkcrXeOz1pzSc/QWW1Nx37al/uUech6I+zaMOD9Xce8KPMMa3j/9BaA59TxekMUHAAAAAElFTkSuQmCC">
+<title>Controle de Extintores</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2222%22 fill=%22%231A2B4E%22/><rect x=%2242%22 y=%2222%22 width=%2216%22 height=%2256%22 rx=%228%22 fill=%22%23D6094D%22/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+/* ============ TOKENS ============
+   Identidade visual baseada no site da Timbro Trading (timbrotrading.com):
+   azul-marinho #1A2B4E como base sóbria, magenta #D6094D como cor de
+   destaque exclusiva. Fundo off-white, tipografia limpa. */
+:root{
+  --ink:#12151C;
+  --ink-soft:#4B5572;
+  --ink-faint:#8991A8;
+  --bg:#F2F0EF;
+  --surface:#FFFFFF;
+  --line:#DDE0E8;
+  --line-soft:#ECEEF2;
+  --primary:#1A2B4E;
+  --primary-dark:#062471;
+  --primary-tint:#E8EAF2;
+  --secondary:#2E4A80;
+  --secondary-tint:#E8EDF5;
+  --accent:#D6094D;
+  --accent-dark:#AA063C;
+  --accent-tint:#FCE8EF;
+  --ok:#2F8F5B;
+  --ok-bg:#E6F3EA;
+  --warn:#B4780F;
+  --warn-bg:#FBF0DC;
+  --danger:#C0213A;
+  --danger-bg:#F8E6EA;
+  --radius:10px;
+  --font-ui:'IBM Plex Sans',system-ui,-apple-system,sans-serif;
+  --font-mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:var(--font-ui);
+  background:var(--bg);
+  color:var(--ink);
+  -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+}
+button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit;}
+a{color:inherit;}
+h1,h2,h3,h4{margin:0;font-weight:600;letter-spacing:-0.01em;}
+p{margin:0;}
+::selection{background:var(--primary);color:#fff;}
+
+/* ============ APP SHELL ============ */
+#shell{display:flex;min-height:100vh;}
+
+#sidebar{
+  width:232px;flex-shrink:0;background:var(--primary);color:#E7ECF5;
+  display:flex;flex-direction:column;padding:22px 14px;position:sticky;top:0;height:100vh;
+}
+.brand{display:flex;align-items:center;gap:10px;padding:4px 10px 22px 10px;}
+.brand-mark{width:34px;height:34px;border-radius:8px;background:var(--accent);position:relative;flex-shrink:0;}
+.brand-mark::after{content:'';position:absolute;left:50%;top:18%;transform:translateX(-50%);width:9px;height:64%;border-radius:5px;background:#fff;}
+.brand-text{line-height:1.15;}
+.brand-text b{display:block;font-size:14.5px;font-weight:700;color:#fff;letter-spacing:.12em;text-transform:uppercase;}
+.brand-text span{display:block;font-size:10.5px;color:#8A9DC4;letter-spacing:.03em;}
+
+nav.mainnav{display:flex;flex-direction:column;gap:2px;margin-top:6px;}
+.navitem{
+  display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:8px;cursor:pointer;
+  color:#A8BBDA;font-size:13.5px;font-weight:500;border:none;background:none;text-align:left;width:100%;
+}
+.navitem svg{width:17px;height:17px;flex-shrink:0;opacity:.85;}
+.navitem:hover{background:rgba(255,255,255,.07);color:#fff;}
+.navitem.active{background:var(--surface);color:var(--primary-dark);}
+.navitem.active svg{opacity:1;}
+.nav-badge{margin-left:auto;font-family:var(--font-mono);font-size:10.5px;background:var(--danger);color:#fff;border-radius:20px;padding:1px 6px;font-weight:600;}
+.navitem.active .nav-badge{background:var(--danger);color:#fff;}
+
+.sidebar-foot{margin-top:auto;padding:10px;font-size:11px;color:#6A80A8;line-height:1.5;}
+
+#main{flex:1;min-width:0;display:flex;flex-direction:column;}
+#topbar{
+  display:none;align-items:center;justify-content:space-between;padding:14px 16px;
+  background:var(--primary);color:#fff;position:sticky;top:0;z-index:20;
+}
+#content{flex:1;padding:26px 30px 100px 30px;max-width:1180px;width:100%;}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap;}
+.page-head h1{font-size:22px;}
+.page-head .sub{color:var(--ink-soft);font-size:13.5px;margin-top:3px;}
+.eyebrow{font-size:11.5px;color:var(--ink-faint);font-weight:500;margin-bottom:3px;}
+
+/* bottom nav mobile */
+#bottomnav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--line);z-index:30;padding:6px 4px calc(6px + env(safe-area-inset-bottom)) 4px;}
+#bottomnav .row{display:flex;justify-content:space-around;}
+.bnitem{display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;padding:6px 4px;color:var(--ink-faint);font-size:10px;font-weight:500;position:relative;}
+.bnitem svg{width:19px;height:19px;}
+.bnitem.active{color:var(--primary);}
+.bnitem .dot{position:absolute;top:2px;right:14px;width:7px;height:7px;border-radius:50%;background:var(--danger);}
+
+/* ============ BUTTONS ============ */
+.btn{
+  display:inline-flex;align-items:center;gap:7px;padding:9px 15px;border-radius:8px;border:1px solid transparent;
+  font-size:13.5px;font-weight:600;cursor:pointer;white-space:nowrap;
+}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover{background:var(--accent-dark);}
+.btn-line{background:var(--surface);border-color:var(--line);color:var(--ink);}
+.btn-line:hover{border-color:var(--primary);color:var(--primary);}
+.btn-ghost{background:none;border:none;color:var(--ink-soft);}
+.btn-ghost:hover{color:var(--ink);}
+.btn-danger{background:var(--danger-bg);color:var(--danger);}
+.btn-sm{padding:6px 11px;font-size:12.5px;}
+.btn[disabled]{opacity:.45;cursor:not-allowed;}
+
+/* ============ TAG COMPONENT (inspection-tag motif) ============ */
+.tag{
+  position:relative;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  padding:14px 16px 14px 22px;display:flex;align-items:center;gap:14px;margin-bottom:9px;overflow:hidden;
+}
+.tag::before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--ink-faint);}
+.tag.st-ok::before{background:var(--ok);}
+.tag.st-warn::before{background:var(--warn);}
+.tag.st-danger::before{background:var(--danger);}
+.tag-hole{position:absolute;left:9px;top:50%;transform:translateY(-50%);width:9px;height:9px;border-radius:50%;background:var(--bg);border:1px solid var(--line);}
+.tag-main{flex:1;min-width:0;cursor:pointer;}
+.tag-code{font-family:var(--font-mono);font-weight:600;font-size:13px;color:var(--primary-dark);}
+.tag-name{font-size:14.5px;font-weight:600;margin-top:1px;}
+.tag-meta{font-size:12px;color:var(--ink-soft);margin-top:3px;display:flex;gap:10px;flex-wrap:wrap;}
+.tag-status{font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:20px;white-space:nowrap;}
+.st-ok .tag-status{background:var(--ok-bg);color:var(--ok);}
+.st-warn .tag-status{background:var(--warn-bg);color:var(--warn);}
+.st-danger .tag-status{background:var(--danger-bg);color:var(--danger);}
+.tag-actions{display:flex;gap:6px;flex-shrink:0;}
+
+/* ============ SURFACES / FORMS ============ */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px;}
+.panel + .panel{margin-top:14px;}
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:12.5px;font-weight:600;color:var(--ink-soft);margin-bottom:6px;}
+.field input[type=text],.field input[type=date],.field input[type=number],.field select,.field textarea{
+  width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:7px;background:var(--surface);
+}
+.field input:focus,.field select:focus,.field textarea:focus{outline:2px solid var(--accent);outline-offset:0;border-color:var(--accent);}
+.field textarea{resize:vertical;min-height:64px;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+@media(max-width:680px){.grid2,.grid3{grid-template-columns:1fr;}}
+.form-actions{display:flex;gap:9px;justify-content:flex-end;margin-top:6px;}
+.empty{padding:44px 20px;text-align:center;color:var(--ink-faint);}
+.empty svg{width:34px;height:34px;margin-bottom:10px;opacity:.5;}
+.empty b{display:block;color:var(--ink-soft);font-size:14px;margin-bottom:4px;}
+
+/* checklist item */
+.check-item{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border:1px solid var(--line);border-radius:8px;margin-bottom:8px;}
+.check-item .ci-label{font-size:13.5px;font-weight:600;}
+.check-item .ci-hint{font-size:11.5px;color:var(--ink-faint);margin-top:2px;}
+.seg{display:flex;border:1px solid var(--line);border-radius:7px;overflow:hidden;}
+.seg button{border:none;background:var(--surface);padding:7px 13px;font-size:12.5px;font-weight:600;color:var(--ink-soft);cursor:pointer;border-left:1px solid var(--line);}
+.seg button:first-child{border-left:none;}
+.seg button.sel-ok.on{background:var(--ok-bg);color:var(--ok);}
+.seg button.sel-nok.on{background:var(--danger-bg);color:var(--danger);}
+
+/* dashboard */
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;}
+@media(max-width:900px){.stat-row{grid-template-columns:repeat(2,1fr);}}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 17px;}
+.stat .n{font-family:var(--font-mono);font-size:26px;font-weight:600;}
+.stat .l{font-size:12px;color:var(--ink-soft);margin-top:2px;}
+.stat.acc-ok .n{color:var(--ok);}
+.stat.acc-warn .n{color:var(--warn);}
+.stat.acc-danger .n{color:var(--danger);}
+.stat-click{cursor:pointer;transition:border-color .15s,transform .1s;}
+.stat-click:hover{border-color:var(--ink-faint);}
+.stat-click:active{transform:scale(.98);}
+
+.barmeter{height:10px;border-radius:6px;overflow:hidden;display:flex;background:var(--line-soft);margin:10px 0 8px 0;}
+.barmeter span{height:100%;}
+.legend{display:flex;gap:16px;font-size:12px;color:var(--ink-soft);flex-wrap:wrap;}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;position:relative;top:1px;}
+
+.section-title{font-size:13px;font-weight:700;text-transform:none;color:var(--ink);margin:26px 0 10px 0;display:flex;align-items:center;justify-content:space-between;}
+.section-title span.count{font-family:var(--font-mono);font-weight:600;color:var(--ink-faint);font-size:12px;}
+
+/* qr */
+.qr-box{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;display:inline-block;}
+.qr-box svg{display:block;width:150px;height:150px;}
+.printgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+@media(max-width:760px){.printgrid{grid-template-columns:repeat(2,1fr);}}
+.printtag{border:1px dashed var(--ink-faint);border-radius:8px;padding:10px;text-align:center;background:#fff;}
+.printtag svg{width:100px;height:100px;}
+.printtag .pt-code{font-family:var(--font-mono);font-weight:700;font-size:13px;margin-top:6px;}
+.printtag .pt-name{font-size:10.5px;color:var(--ink-soft);margin-top:1px;}
+.printtag .pt-org{font-size:9px;color:var(--ink-faint);margin-top:5px;letter-spacing:.03em;}
+
+@media print{
+  #sidebar,#topbar,#bottomnav,.no-print{display:none !important;}
+  #content{padding:0;max-width:none;}
+  body{background:#fff;}
+  .printtag{break-inside:avoid;}
+}
+
+/* scanner */
+#reader{width:100%;max-width:420px;border-radius:12px;overflow:hidden;background:#000;}
+.scan-frame{position:relative;}
+.scanhelp{font-size:12.5px;color:var(--ink-soft);margin-top:10px;line-height:1.5;}
+
+.badge-type{font-family:var(--font-mono);font-size:10.5px;font-weight:600;background:var(--primary-tint);color:var(--primary);padding:2px 7px;border-radius:5px;}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500;color:var(--ink-soft);}
+.modal-overlay{position:fixed;inset:0;background:rgba(20,32,28,.5);display:flex;align-items:center;justify-content:center;z-index:100;padding:16px;}
+.modal{background:#fff;border-radius:12px;padding:22px;max-width:420px;width:100%;}
+.modal h3{font-size:16px;margin-bottom:8px;}
+.modal p{font-size:13.5px;color:var(--ink-soft);line-height:1.5;margin-bottom:16px;}
+
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 18px;border-radius:8px;font-size:13px;font-weight:500;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,.2);}
+
+.history-row{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--line-soft);}
+.history-row:last-child{border-bottom:none;}
+.history-date{font-family:var(--font-mono);font-size:12px;color:var(--ink-faint);width:78px;flex-shrink:0;padding-top:2px;}
+.history-body{flex:1;}
+.history-body b{font-size:13px;}
+.history-items{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;}
+.hi{font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:20px;}
+.hi.ok{background:var(--ok-bg);color:var(--ok);}
+.hi.nok{background:var(--danger-bg);color:var(--danger);}
+
+@media(max-width:900px){
+  #sidebar{display:none;}
+  #topbar{display:flex;}
+  #bottomnav{display:block;}
+  #content{padding:16px 14px 90px 14px;}
+}
+</style>
+</head>
+<body>
+
+<div id="shell">
+  <aside id="sidebar"></aside>
+  <div id="main">
+    <div id="topbar"></div>
+    <div id="content"></div>
+  </div>
+</div>
+<div id="bottomnav"></div>
+<div id="modalroot"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+<script>
+/* ============================================================
+   CONTROLE DE EXTINTORES — app local (localStorage)
+   ============================================================ */
+
+/* ---------- ICONS (inline, stroke-based, no external deps) ---------- */
+const ICONS = {
+  dash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>',
+  local: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.1-7-11.2A7 7 0 0 1 19 9.8C19 14.9 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.4"/></svg>',
+  ext: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3h4v3h-4z"/><path d="M9 6h6l1 3H8z"/><rect x="7.5" y="9" width="9" height="12" rx="2"/><path d="M16 6l3-1.5"/></svg>',
+  insp: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12.5l2 2 4-4.5"/><rect x="3.5" y="3.5" width="17" height="17" rx="3.5"/></svg>',
+  qr: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1"/><rect x="14" y="3.5" width="6.5" height="6.5" rx="1"/><rect x="3.5" y="14" width="6.5" height="6.5" rx="1"/><path d="M14 14h3v3h-3zM20 14v6M14 20h6"/></svg>',
+  hist: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 8v4.5l3 2"/></svg>',
+  plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
+  trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6 7l1 13h10l1-13"/></svg>',
+  back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>',
+  camera:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8a2 2 0 0 1 2-2h1.2l1-1.8h7.6l1 1.8H19a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="12.5" r="3.4"/></svg>',
+  print: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6"/><rect x="4" y="9" width="16" height="8" rx="1.5"/><path d="M6 14h12v7H6z"/></svg>',
+  menu: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>',
+  gauge:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15a8 8 0 1 1 16 0"/><path d="M12 15l3.5-4.5"/></svg>',
+  drop: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></svg>',
+};
+
+/* ---------- TIPOS DE EXTINTOR ---------- */
+const TIPOS = {
+  PQS:   {label:'Pó Químico Seco (PQS)',  manometro:true},
+  AP:    {label:'Água Pressurizada (AP)',  manometro:true},
+  ABC:   {label:'Pó ABC (ABC)',            manometro:true},
+  CO2:   {label:'Gás Carbônico (CO2)',     manometro:false, difusor:true},
+  ESPUMA:{label:'Espuma Mecânica (AFFF)', manometro:false},
+};
+
+// Labels base dos itens — o bico tem label condicional por tipo (ver getItemLabel)
+const ITEM_LABELS = {
+  lacre:    'Lacre',
+  anel:     'Anel de vedação',
+  gatilho:  'Gatilho',
+  manometro:'Manômetro',
+  mangueira:'Mangueira',
+  bico:     'Bico / difusor',
+  cilindro: 'Situação do cilindro',
+};
+// Label do bico varia conforme o tipo de extintor
+function getItemLabel(key, tipoKey){
+  if(key === 'bico') return TIPOS[tipoKey]?.difusor ? 'Bico difusor (CO₂)' : 'Bico';
+  return ITEM_LABELS[key] || key;
+}
+// Retorna a lista de itens a inspecionar para um dado tipo
+function itensParaTipo(tipoKey){
+  const t = TIPOS[tipoKey] || {};
+  return [
+    'lacre',
+    'anel',
+    'gatilho',
+    ...(t.manometro ? ['manometro'] : []),
+    'mangueira',
+    'bico',
+    'cilindro',
+  ];
+}
+
+/* ============================================================
+   GERADOR DE QR CODE — implementação própria, sem dependências
+   externas (funciona 100% offline). Modo Byte, nível de correção M,
+   versões 1 a 3 (até 42 caracteres — mais que suficiente para os
+   códigos de extintor). Validado por decodificação real antes de
+   entrar no app.
+   ============================================================ */
+const QR = (function(){
+  const GF_EXP = new Array(512);
+  const GF_LOG = new Array(256);
+  (function initGF(){
+    let x = 1;
+    for(let i=0;i<255;i++){
+      GF_EXP[i]=x; GF_LOG[x]=i;
+      x <<= 1;
+      if(x & 0x100) x ^= 0x11D;
+    }
+    for(let i=255;i<512;i++) GF_EXP[i]=GF_EXP[i-255];
+  })();
+  function gfMul(a,b){ if(a===0||b===0) return 0; return GF_EXP[GF_LOG[a]+GF_LOG[b]]; }
+
+  function rsGeneratorPoly(degree){
+    let poly = [1];
+    for(let i=0;i<degree;i++){
+      const term = GF_EXP[i];
+      const res = new Array(poly.length+1).fill(0);
+      for(let j=0;j<poly.length;j++){
+        res[j] ^= poly[j];
+        res[j+1] ^= gfMul(poly[j], term);
+      }
+      poly = res;
+    }
+    return poly;
+  }
+  function rsEncode(dataCodewords, ecCount){
+    const gen = rsGeneratorPoly(ecCount);
+    const res = new Array(dataCodewords.length + ecCount).fill(0);
+    for(let i=0;i<dataCodewords.length;i++) res[i]=dataCodewords[i];
+    for(let i=0;i<dataCodewords.length;i++){
+      const coef = res[i];
+      if(coef!==0){
+        for(let j=0;j<gen.length;j++) res[i+j] ^= gfMul(gen[j], coef);
+      }
+    }
+    return res.slice(dataCodewords.length, dataCodewords.length+ecCount);
+  }
+
+  const VERSIONS = {
+    1:{size:21, dataCodewords:16, ecCodewords:10, byteCapacity:14, alignment:null},
+    2:{size:25, dataCodewords:28, ecCodewords:16, byteCapacity:26, alignment:[18]},
+    3:{size:29, dataCodewords:44, ecCodewords:26, byteCapacity:42, alignment:[22]},
+  };
+  function pickVersion(byteLen){
+    for(const v of [1,2,3]) if(byteLen <= VERSIONS[v].byteCapacity) return v;
+    return null;
+  }
+
+  class BitBuffer{
+    constructor(){ this.bits=[]; }
+    put(val, len){ for(let i=len-1;i>=0;i--) this.bits.push((val>>>i)&1); }
+    get length(){ return this.bits.length; }
+  }
+  function textToBytes(text){
+    const bytes=[];
+    for(let i=0;i<text.length;i++){
+      const c = text.codePointAt(i);
+      if(c<0x80){ bytes.push(c); }
+      else if(c<0x800){ bytes.push(0xC0|(c>>6), 0x80|(c&0x3F)); }
+      else { bytes.push(0xE0|(c>>12), 0x80|((c>>6)&0x3F), 0x80|(c&0x3F)); }
+    }
+    return bytes;
+  }
+  function buildCodewords(text, version){
+    const info = VERSIONS[version];
+    const bytes = textToBytes(text);
+    const bb = new BitBuffer();
+    bb.put(0b0100, 4);
+    bb.put(bytes.length, 8);
+    for(const byte of bytes) bb.put(byte, 8);
+    const totalDataBits = info.dataCodewords*8;
+    const termLen = Math.min(4, totalDataBits - bb.length);
+    if(termLen>0) bb.put(0, termLen);
+    while(bb.length % 8 !== 0) bb.bits.push(0);
+    const dataCodewords=[];
+    for(let i=0;i<bb.length;i+=8){
+      let byte=0;
+      for(let j=0;j<8;j++) byte=(byte<<1)|bb.bits[i+j];
+      dataCodewords.push(byte);
+    }
+    const PAD=[0xEC,0x11]; let p=0;
+    while(dataCodewords.length < info.dataCodewords){ dataCodewords.push(PAD[p%2]); p++; }
+    const ecCodewords = rsEncode(dataCodewords, info.ecCodewords);
+    return dataCodewords.concat(ecCodewords);
+  }
+  function makeMatrix(version){
+    const size = VERSIONS[version].size;
+    const modules = Array.from({length:size},()=>new Array(size).fill(null));
+    const isFunc = Array.from({length:size},()=>new Array(size).fill(false));
+    function setFn(r,c,val){ if(r<0||c<0||r>=size||c>=size) return; modules[r][c]=val?1:0; isFunc[r][c]=true; }
+    function placeFinder(r0,c0){
+      for(let r=-1;r<=7;r++){
+        for(let c=-1;c<=7;c++){
+          const rr=r0+r, cc=c0+c;
+          if(rr<0||cc<0||rr>=size||cc>=size) continue;
+          let val=0;
+          if(r>=0&&r<=6&&c>=0&&c<=6){
+            const isBorder=(r===0||r===6||c===0||c===6);
+            const isCore=r>=2&&r<=4&&c>=2&&c<=4;
+            val=(isBorder||isCore)?1:0;
+          }
+          setFn(rr,cc,val);
+        }
+      }
+    }
+    placeFinder(0,0); placeFinder(0,size-7); placeFinder(size-7,0);
+    for(let i=8;i<size-8;i++){ const v=(i%2===0)?1:0; setFn(6,i,v); setFn(i,6,v); }
+    const align = VERSIONS[version].alignment;
+    if(align){
+      for(const r of align){
+        for(const c of align){
+          const nearFinder = (r<=8&&c<=8)||(r<=8&&c>=size-9)||(r>=size-9&&c<=8);
+          if(nearFinder) continue;
+          for(let dr=-2;dr<=2;dr++) for(let dc=-2;dc<=2;dc++){
+            const ring=Math.max(Math.abs(dr),Math.abs(dc));
+            setFn(r+dr,c+dc,(ring===2||ring===0)?1:0);
+          }
+        }
+      }
+    }
+    setFn(size-8,8,1);
+    for(let i=0;i<9;i++){ if(!isFunc[8][i]) setFn(8,i,0); if(!isFunc[i][8]) setFn(i,8,0); }
+    for(let i=0;i<8;i++){ if(!isFunc[8][size-1-i]) setFn(8,size-1-i,0); if(!isFunc[size-1-i][8]) setFn(size-1-i,8,0); }
+    return {size, modules, isFunc};
+  }
+  function placeData(mtx, codewords){
+    const {size, modules, isFunc} = mtx;
+    const bits=[];
+    for(const cw of codewords) for(let i=7;i>=0;i--) bits.push((cw>>>i)&1);
+    let bitIdx=0, dir=-1, col=size-1;
+    while(col>0){
+      if(col===6) col--;
+      for(let count=0;count<size;count++){
+        const row = (dir===-1)?(size-1-count):count;
+        for(let cOff=0;cOff<2;cOff++){
+          const c=col-cOff;
+          if(isFunc[row][c]) continue;
+          modules[row][c] = bitIdx<bits.length ? bits[bitIdx] : 0;
+          bitIdx++;
+        }
+      }
+      dir=-dir; col-=2;
+    }
+  }
+  function applyMask(mtx){
+    const {size, modules, isFunc} = mtx;
+    for(let r=0;r<size;r++) for(let c=0;c<size;c++){
+      if(isFunc[r][c]) continue;
+      if((r+c)%2===0) modules[r][c]=modules[r][c]^1;
+    }
+  }
+  function placeFormatInfo(mtx){
+    const {size, modules} = mtx;
+    const fmt=[1,0,1,0,1,0,0,0,0,0,1,0,0,1,0]; // EC=M, mask=0 (pré-calculado com BCH)
+    const aCoords=[[8,0],[8,1],[8,2],[8,3],[8,4],[8,5],[8,7],[8,8],[7,8],[5,8],[4,8],[3,8],[2,8],[1,8],[0,8]];
+    for(let i=0;i<15;i++){ const [r,c]=aCoords[i]; modules[r][c]=fmt[i]; }
+    const bCoords=[[size-1,8],[size-2,8],[size-3,8],[size-4,8],[size-5,8],[size-6,8],[size-7,8],[8,size-8],[8,size-7],[8,size-6],[8,size-5],[8,size-4],[8,size-3],[8,size-2],[8,size-1]];
+    for(let i=0;i<15;i++){ const [r,c]=bCoords[i]; modules[r][c]=fmt[i]; }
+  }
+  function generate(text){
+    const bytes = textToBytes(String(text));
+    const version = pickVersion(bytes.length);
+    if(!version) return null; // texto longo demais
+    const codewords = buildCodewords(String(text), version);
+    const mtx = makeMatrix(version);
+    placeData(mtx, codewords);
+    applyMask(mtx);
+    placeFormatInfo(mtx);
+    for(let r=0;r<mtx.size;r++) for(let c=0;c<mtx.size;c++) if(mtx.modules[r][c]===null) mtx.modules[r][c]=0;
+    return {size:mtx.size, matrix:mtx.modules};
+  }
+  function toSvg(text, cellSize, margin){
+    cellSize = cellSize || 5; margin = margin==null ? 4 : margin;
+    const q = generate(text);
+    if(!q) return '<svg viewBox="0 0 10 10"></svg>';
+    const dim = (q.size + margin*2) * cellSize;
+    let rects = '';
+    for(let r=0;r<q.size;r++){
+      for(let c=0;c<q.size;c++){
+        if(q.matrix[r][c]===1){
+          rects += `<rect x="${(c+margin)*cellSize}" y="${(r+margin)*cellSize}" width="${cellSize}" height="${cellSize}"/>`;
+        }
+      }
+    }
+    return `<svg viewBox="0 0 ${dim} ${dim}" width="${dim}" height="${dim}" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect x="0" y="0" width="${dim}" height="${dim}" fill="#fff"/><g fill="#0B120F">${rects}</g></svg>`;
+  }
+  return {generate, toSvg};
+})();
+
+/* ---------- STORAGE ---------- */
+const DB_KEY = 'ext_app_v1';
+
+// Detecta se o localStorage realmente funciona neste navegador/contexto.
+// Importante no Safari: abrir o arquivo direto (file://) pode bloquear ou
+// não persistir o armazenamento entre sessões.
+function testStorage(){
+  try{
+    const k = '__ext_storage_test__';
+    localStorage.setItem(k,'1');
+    localStorage.removeItem(k);
+    return true;
+  }catch(e){ return false; }
+}
+const STORAGE_OK = testStorage();
+
+function loadDB(){
+  try{
+    const raw = localStorage.getItem(DB_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return {locais:[], extintores:[], inspecoes:[], seq:0, org:'TIMBRO TRADING S.A.'};
+}
+let DB = loadDB();
+// Garante que o nome da organização sempre reflita o valor atual,
+// mesmo em dados salvos com o nome anterior.
+if(!DB.org || DB.org === 'FIBRASA S.A.') {
+  DB.org = 'TIMBRO TRADING S.A.';
+  saveDB();
+}
+let saveFailed = false;
+function saveDB(){
+  try{
+    localStorage.setItem(DB_KEY, JSON.stringify(DB));
+    saveFailed = false;
+  }catch(e){
+    const wasOk = !saveFailed;
+    saveFailed = true;
+    console.error('Falha ao salvar dados:', e);
+    if(wasOk) toast('Não foi possível salvar. Exporte um backup para não perder seus dados.');
+  }
+}
+function uid(){ return 'id' + Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+function nextCodigo(){ DB.seq = (DB.seq||0)+1; saveDB(); return 'EXT-' + String(DB.seq).padStart(4,'0'); }
+
+/* ---------- BACKUP (exportar / importar) ----------
+   Independente do localStorage funcionar de forma confiável neste
+   navegador, isso garante uma cópia dos dados que o usuário controla. */
+function exportBackup(){
+  const blob = new Blob([JSON.stringify(DB, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const stamp = todayISO();
+  a.href = url;
+  a.download = `extintores-backup-${stamp}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 2000);
+}
+function importBackupFile(file, onDone){
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    try{
+      const parsed = JSON.parse(reader.result);
+      if(!parsed || !Array.isArray(parsed.locais) || !Array.isArray(parsed.extintores) || !Array.isArray(parsed.inspecoes)){
+        onDone(false, 'Arquivo não reconhecido como backup válido.');
+        return;
+      }
+      DB = {locais:parsed.locais, extintores:parsed.extintores, inspecoes:parsed.inspecoes, seq:parsed.seq||0, org:parsed.org||'TIMBRO TRADING S.A.'};
+      saveDB();
+      onDone(true);
+    }catch(e){
+      onDone(false, 'Não foi possível ler o arquivo (JSON inválido).');
+    }
+  };
+  reader.onerror = ()=> onDone(false, 'Erro ao ler o arquivo.');
+  reader.readAsText(file);
+}
+function openBackupModal(){
+  const root = document.getElementById('modalroot');
+  root.innerHTML = `<div class="modal-overlay" id="ovl"><div class="modal">
+    <h3>Backup de dados</h3>
+    <p>${STORAGE_OK ? 'Seus dados ficam salvos neste navegador. Exportar um backup periodicamente evita perda de dados caso o armazenamento local seja limpo.' : '<b style="color:var(--danger);">Este navegador não está conseguindo salvar dados localmente.</b> Exporte um backup ao final de cada uso e importe-o na próxima vez.'}</p>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <button class="btn btn-primary" id="btn-export" style="justify-content:center;">${ICONS.print}Exportar backup (.json)</button>
+      <label class="btn btn-line" style="justify-content:center;cursor:pointer;">
+        ${ICONS.edit}Importar backup (.json)
+        <input type="file" accept="application/json" id="f-import" style="display:none;">
+      </label>
+    </div>
+    <div class="form-actions"><button class="btn btn-ghost" id="mclose">Fechar</button></div>
+  </div></div>`;
+  document.getElementById('mclose').onclick=()=>root.innerHTML='';
+  document.getElementById('ovl').onclick=(e)=>{ if(e.target.id==='ovl') root.innerHTML=''; };
+  document.getElementById('btn-export').onclick=()=>{ exportBackup(); toast('Backup exportado.'); };
+  document.getElementById('f-import').onchange=(e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    confirmModal('Importar backup', 'Isso substitui todos os dados atuais pelos dados do arquivo selecionado. Deseja continuar?', ()=>{
+      importBackupFile(file, (ok, msg)=>{
+        if(ok){ toast('Backup importado com sucesso.'); root.innerHTML=''; render(); }
+        else { toast(msg || 'Falha ao importar.'); }
+      });
+    });
+  };
+}
+
+/* ---------- DATE HELPERS ---------- */
+function todayISO(){ return new Date().toISOString().slice(0,10); }
+function addMonths(iso,n){ const d=new Date(iso+'T00:00:00'); d.setMonth(d.getMonth()+n); return d.toISOString().slice(0,10); }
+function addYears(iso,n){ const d=new Date(iso+'T00:00:00'); d.setFullYear(d.getFullYear()+n); return d.toISOString().slice(0,10); }
+function fmtDate(iso){ if(!iso) return '—'; const [y,m,d]=iso.split('-'); return `${d}/${m}/${y}`; }
+function daysUntil(iso){ const t=new Date(todayISO()+'T00:00:00'); const d=new Date(iso+'T00:00:00'); return Math.round((d-t)/86400000); }
+
+/* ---------- STATUS ENGINE ---------- */
+// retorna {status:'ok'|'warn'|'danger', dias, proxima, label}
+function prazoStatus(proximaISO, warnDays){
+  if(!proximaISO) return {status:'danger', dias:null, proxima:null};
+  const dias = daysUntil(proximaISO);
+  let status = 'ok';
+  if(dias < 0) status = 'danger';
+  else if(dias <= warnDays) status = 'warn';
+  return {status, dias, proxima:proximaISO};
+}
+function inspecoesDoExtintor(extId){
+  return DB.inspecoes.filter(i=>i.extintorId===extId).sort((a,b)=> b.data.localeCompare(a.data));
+}
+function ultimaInspecao(extId, tipo){
+  return inspecoesDoExtintor(extId).find(i=>i.tipo===tipo);
+}
+function statusMensal(ext){
+  const ult = ultimaInspecao(ext.id,'mensal');
+  const base = ult ? ult.data : ext.dataCadastro;
+  const proxima = addMonths(base,1);
+  return {...prazoStatus(proxima,7), tipo:'mensal', label:'Inspeção mensal'};
+}
+function statusAnual(ext){
+  const base = ext.dataUltimaRecargaAnual || ext.dataCadastro;
+  const proxima = addYears(base,1);
+  return {...prazoStatus(proxima,30), tipo:'anual', label:'Manutenção anual'};
+}
+function statusHidro(ext){
+  const base = ext.dataUltimoHidrostatico || ext.dataFabricacao || ext.dataCadastro;
+  const proxima = addYears(base,5);
+  return {...prazoStatus(proxima,60), tipo:'hidrostatico', label:'Teste hidrostático'};
+}
+function statusGeral(ext){
+  const s = [statusMensal(ext), statusAnual(ext), statusHidro(ext)];
+  if(s.some(x=>x.status==='danger')) return 'danger';
+  if(s.some(x=>x.status==='warn')) return 'warn';
+  return 'ok';
+}
+const STATUS_LABEL = {ok:'Em dia', warn:'Atenção', danger:'Vencido'};
+
+/* ---------- ROUTER ---------- */
+let ROUTE = {view:'dashboard'};
+function nav(view, params){ ROUTE = {view, ...params}; location.hash = view; render(); window.scrollTo(0,0); }
+window.addEventListener('hashchange', ()=>{
+  const v = location.hash.replace('#','') || 'dashboard';
+  if(!ROUTE.view || ROUTE.view!==v) { ROUTE = {view:v}; render(); }
+});
+
+/* ---------- TOAST ---------- */
+function toast(msg){
+  const el = document.createElement('div');
+  el.className='toast'; el.textContent=msg;
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),2400);
+}
+
+/* ---------- MODAL (confirm) ---------- */
+function confirmModal(title, desc, onConfirm){
+  const root = document.getElementById('modalroot');
+  root.innerHTML = `<div class="modal-overlay" id="ovl"><div class="modal">
+    <h3>${title}</h3><p>${desc}</p>
+    <div class="form-actions">
+      <button class="btn btn-line" id="mcancel">Cancelar</button>
+      <button class="btn btn-danger" id="mok">Confirmar</button>
+    </div></div></div>`;
+  document.getElementById('mcancel').onclick=()=>root.innerHTML='';
+  document.getElementById('ovl').onclick=(e)=>{ if(e.target.id==='ovl') root.innerHTML=''; };
+  document.getElementById('mok').onclick=()=>{ onConfirm(); root.innerHTML=''; };
+}
+
+/* ---------- NAV STRUCTURE ---------- */
+const NAVITEMS = [
+  {v:'dashboard', label:'Painel', icon:ICONS.dash},
+  {v:'locais', label:'Locais', icon:ICONS.local},
+  {v:'extintores', label:'Extintores', icon:ICONS.ext},
+  {v:'inspecao', label:'Inspeção', icon:ICONS.insp},
+  {v:'qrcodes', label:'QR Codes', icon:ICONS.qr},
+  {v:'historico', label:'Histórico', icon:ICONS.hist},
+];
+function pendenciasCount(){
+  return DB.extintores.filter(e=>statusGeral(e)!=='ok').length;
+}
+
+function renderSidebar(){
+  const cur = ROUTE.view;
+  document.getElementById('sidebar').innerHTML = `
+    <div class="brand">
+      <div class="brand-mark"></div>
+      <div class="brand-text"><b>Extintores</b><span>${DB.org}</span></div>
+    </div>
+    <nav class="mainnav">
+      ${NAVITEMS.map(n=>`
+        <button class="navitem ${cur===n.v?'active':''}" data-nav="${n.v}">
+          ${n.icon}<span>${n.label}</span>
+          ${n.v==='dashboard' && pendenciasCount()>0 ? `<span class="nav-badge">${pendenciasCount()}</span>`:''}
+        </button>`).join('')}
+    </nav>
+    <div class="sidebar-foot">
+      ${!STORAGE_OK ? `<div style="color:#F5BFCC;font-weight:600;margin-bottom:6px;">⚠ Armazenamento indisponível neste navegador — exporte um backup ao sair.</div>` : ''}
+      <button id="btn-open-backup" style="background:none;border:none;color:#A8BBDA;font-size:11px;text-decoration:underline;cursor:pointer;padding:0;font-weight:600;">Backup de dados</button>
+      <div style="margin-top:6px;">SSMA · Gestão de equipamentos de combate a incêndio</div>
+    </div>
+  `;
+  document.querySelectorAll('[data-nav]').forEach(b=> b.onclick=()=>nav(b.dataset.nav));
+  const backupBtn = document.getElementById('btn-open-backup');
+  if(backupBtn) backupBtn.onclick = openBackupModal;
+
+  document.getElementById('topbar').innerHTML = `
+    <div style="display:flex;align-items:center;gap:9px;">
+      <div class="brand-mark" style="width:26px;height:26px;"></div>
+      <b style="font-size:14.5px;">Extintores</b>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      ${!STORAGE_OK ? `<span style="font-size:16px;" title="Armazenamento indisponível">⚠</span>`:''}
+      ${pendenciasCount()>0 ? `<span class="nav-badge" style="position:static;">${pendenciasCount()} pendente${pendenciasCount()>1?'s':''}</span>`:''}
+      <button id="btn-open-backup-mobile" style="background:none;border:1px solid rgba(255,255,255,.3);border-radius:6px;color:#fff;font-size:11px;padding:4px 8px;cursor:pointer;">Backup</button>
+    </div>
+  `;
+  const backupBtnMobile = document.getElementById('btn-open-backup-mobile');
+  if(backupBtnMobile) backupBtnMobile.onclick = openBackupModal;
+
+  document.getElementById('bottomnav').innerHTML = `<div class="row">
+    ${NAVITEMS.map(n=>`
+      <button class="bnitem ${cur===n.v?'active':''}" data-nav="${n.v}">
+        ${n.icon}<span>${n.label}</span>
+        ${n.v==='dashboard' && pendenciasCount()>0 ? `<span class="dot"></span>`:''}
+      </button>`).join('')}
+  </div>`;
+  document.querySelectorAll('[data-nav]').forEach(b=> b.onclick=()=>nav(b.dataset.nav));
+}
+
+/* ================= DASHBOARD ================= */
+function renderDashboard(){
+  const exts = DB.extintores;
+  const n = exts.length;
+  const okN = exts.filter(e=>statusGeral(e)==='ok').length;
+  const warnN = exts.filter(e=>statusGeral(e)==='warn').length;
+  const dangerN = exts.filter(e=>statusGeral(e)==='danger').length;
+
+  const pend = exts.map(e=>({e, items:[statusMensal(e),statusAnual(e),statusHidro(e)].filter(s=>s.status!=='ok').sort((a,b)=>(a.dias??-9999)-(b.dias??-9999))}))
+                    .filter(x=>x.items.length>0)
+                    .sort((a,b)=> (a.items[0].dias??-9999)-(b.items[0].dias??-9999));
+
+  document.getElementById('content').innerHTML = `
+    <div class="page-head">
+      <div><div class="eyebrow">Visão geral</div><h1>Painel de extintores</h1></div>
+      <button class="btn btn-primary" id="btn-nova-insp">${ICONS.insp}Nova inspeção</button>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat"><div class="n">${n}</div><div class="l">Extintores cadastrados</div></div>
+      <div class="stat acc-ok"><div class="n">${okN}</div><div class="l">Em dia</div></div>
+      <div class="stat acc-warn stat-click" id="stat-warn">
+        <div class="n">${warnN}</div><div class="l">Atenção (vencendo)</div>
+      </div>
+      <div class="stat acc-danger stat-click" id="stat-danger">
+        <div class="n">${dangerN}</div><div class="l">Vencidos</div>
+      </div>
+    </div>
+
+    ${n>0 ? `
+    <div class="panel">
+      <div style="font-size:12.5px;font-weight:600;color:var(--ink-soft);">Situação da frota</div>
+      <div class="barmeter">
+        ${okN>0?`<span style="width:${okN/n*100}%;background:var(--ok);"></span>`:''}
+        ${warnN>0?`<span style="width:${warnN/n*100}%;background:var(--warn);"></span>`:''}
+        ${dangerN>0?`<span style="width:${dangerN/n*100}%;background:var(--danger);"></span>`:''}
+      </div>
+      <div class="legend">
+        <span><i style="background:var(--ok)"></i>Em dia (${okN})</span>
+        <span><i style="background:var(--warn)"></i>Atenção (${warnN})</span>
+        <span><i style="background:var(--danger)"></i>Vencido (${dangerN})</span>
+      </div>
+    </div>` : ''}
+
+    <div class="section-title">Pendências <span class="count">${pend.length}</span></div>
+    ${pend.length===0 ? emptyState('Nenhuma pendência no momento.', ICONS.insp) :
+      pend.slice(0,25).map(x=>{
+        const e=x.e; const top=x.items[0];
+        return tagRow(e, top);
+      }).join('')
+    }
+  `;
+  document.getElementById('btn-nova-insp').onclick=()=>nav('inspecao');
+  const statWarn = document.getElementById('stat-warn');
+  const statDanger = document.getElementById('stat-danger');
+  if(statWarn) statWarn.onclick=()=>nav('relatorio-status',{status:'warn'});
+  if(statDanger) statDanger.onclick=()=>nav('relatorio-status',{status:'danger'});
+  bindTagClicks();
+}
+function emptyState(msg, icon){
+  return `<div class="empty">${icon}<b>Tudo certo</b>${msg}</div>`;
+}
+function tagRow(ext, statusObj){
+  const local = DB.locais.find(l=>l.id===ext.localId);
+  const st = statusObj.status;
+  const diasTxt = statusObj.dias==null ? '' : (statusObj.dias<0 ? `há ${Math.abs(statusObj.dias)} dia(s)` : `em ${statusObj.dias} dia(s)`);
+  return `<div class="tag st-${st}" data-ext="${ext.id}">
+    <div class="tag-hole"></div>
+    <div class="tag-main">
+      <div class="tag-code">${ext.codigo} <span class="badge-type">${TIPOS[ext.tipo]?.label.split(' (')[1]?.replace(')','')||ext.tipo}</span></div>
+      <div class="tag-name">${local? local.nome : 'Sem local'}</div>
+      <div class="tag-meta"><span>${statusObj.label}</span><span>${statusObj.proxima? fmtDate(statusObj.proxima):'—'} ${diasTxt?('· '+diasTxt):''}</span></div>
+    </div>
+    <div class="tag-status">${STATUS_LABEL[st]}</div>
+  </div>`;
+}
+function bindTagClicks(){
+  document.querySelectorAll('.tag[data-ext]').forEach(t=>{
+    t.querySelector('.tag-main').onclick=()=> nav('extintor-detalhe',{id:t.dataset.ext});
+  });
+}
+
+/* ================= LOCAIS ================= */
+function renderLocais(){
+  const locais = DB.locais;
+  document.getElementById('content').innerHTML = `
+    <div class="page-head">
+      <div><div class="eyebrow">Cadastro</div><h1>Locais</h1><div class="sub">Setores, áreas ou edificações onde os extintores estão instalados.</div></div>
+      <button class="btn btn-primary" id="btn-add-local">${ICONS.plus}Novo local</button>
+    </div>
+    <div id="locais-list">
+      ${locais.length===0 ? emptyState('Cadastre o primeiro local para começar.', ICONS.local) :
+        locais.map(l=>{
+          const count = DB.extintores.filter(e=>e.localId===l.id).length;
+          return `<div class="tag st-ok" style="align-items:flex-start;" data-local="${l.id}">
+            <div class="tag-hole"></div>
+            <div class="tag-main">
+              <div class="tag-name">${l.nome}</div>
+              <div class="tag-meta"><span>${count} extintor${count!==1?'es':''}</span>${l.descricao?`<span>${l.descricao}</span>`:''}</div>
+            </div>
+            <div class="tag-actions">
+              <button class="btn btn-line btn-sm act-edit">${ICONS.edit}</button>
+              <button class="btn btn-danger btn-sm act-del">${ICONS.trash}</button>
+            </div>
+          </div>`;
+        }).join('')}
+    </div>
+  `;
+  document.getElementById('btn-add-local').onclick=()=>openLocalForm();
+  document.querySelectorAll('[data-local]').forEach(row=>{
+    const id = row.dataset.local;
+    row.querySelector('.act-edit').onclick=()=>openLocalForm(DB.locais.find(l=>l.id===id));
+    row.querySelector('.act-del').onclick=()=>{
+      const count = DB.extintores.filter(e=>e.localId===id).length;
+      confirmModal('Excluir local', count>0? `Este local tem ${count} extintor(es) vinculado(s). Excluir mesmo assim? Os extintores ficarão sem local.` : 'Tem certeza que deseja excluir este local?', ()=>{
+        DB.locais = DB.locais.filter(l=>l.id!==id); saveDB(); renderLocais(); toast('Local excluído.');
+      });
+    };
+  });
+}
+function openLocalForm(local){
+  const root = document.getElementById('modalroot');
+  root.innerHTML = `<div class="modal-overlay" id="ovl"><div class="modal">
+    <h3>${local? 'Editar local':'Novo local'}</h3>
+    <div class="field"><label>Nome do local</label><input type="text" id="f-nome" value="${local?local.nome:''}" placeholder="Ex.: Galpão 2 — Injetados"></div>
+    <div class="field"><label>Descrição (opcional)</label><input type="text" id="f-desc" value="${local?local.descricao||'':''}" placeholder="Referência, bloco, andar..."></div>
+    <div class="form-actions">
+      <button class="btn btn-line" id="mcancel">Cancelar</button>
+      <button class="btn btn-primary" id="msave">${local?'Salvar':'Cadastrar'}</button>
+    </div>
+  </div></div>`;
+  document.getElementById('mcancel').onclick=()=>root.innerHTML='';
+  document.getElementById('ovl').onclick=(e)=>{ if(e.target.id==='ovl') root.innerHTML=''; };
+  document.getElementById('msave').onclick=()=>{
+    const nome = document.getElementById('f-nome').value.trim();
+    if(!nome){ toast('Informe o nome do local.'); return; }
+    const desc = document.getElementById('f-desc').value.trim();
+    if(local){ local.nome=nome; local.descricao=desc; }
+    else { DB.locais.push({id:uid(), nome, descricao:desc}); }
+    saveDB(); root.innerHTML=''; renderLocais(); toast('Local salvo.');
+  };
+}
+
+/* ================= EXTINTORES ================= */
+function renderExtintores(){
+  const exts = [...DB.extintores].sort((a,b)=> a.codigo.localeCompare(b.codigo));
+  document.getElementById('content').innerHTML = `
+    <div class="page-head">
+      <div><div class="eyebrow">Cadastro</div><h1>Extintores</h1><div class="sub">${exts.length} equipamento${exts.length!==1?'s':''} cadastrado${exts.length!==1?'s':''}</div></div>
+      <button class="btn btn-primary" id="btn-add-ext" ${DB.locais.length===0?'disabled title="Cadastre um local primeiro"':''}>${ICONS.plus}Novo extintor</button>
+    </div>
+    ${DB.locais.length===0 ? `<div class="panel" style="margin-bottom:16px;color:var(--ink-soft);font-size:13.5px;">Cadastre um <b>local</b> antes de adicionar extintores.</div>`:''}
+    <div id="ext-list">
+      ${exts.length===0 ? emptyState('Nenhum extintor cadastrado ainda.', ICONS.ext) :
+        exts.map(e=> tagRow(e, [statusMensal(e),statusAnual(e),statusHidro(e)].sort((a,b)=>(a.dias??9999)-(b.dias??9999))[0]) ).join('')}
+    </div>
+  `;
+  document.getElementById('btn-add-ext').onclick=()=>nav('extintor-novo');
+  document.querySelectorAll('.tag[data-ext]').forEach(t=>{
+    t.querySelector('.tag-main').onclick=()=> nav('extintor-detalhe',{id:t.dataset.ext});
+  });
+}
+
+function renderExtintorForm(existing){
+  const isEdit = !!existing;
+  document.getElementById('content').innerHTML = `
+    <button class="btn btn-ghost no-print" id="btn-back" style="margin-bottom:10px;">${ICONS.back}Voltar</button>
+    <div class="page-head"><div><div class="eyebrow">Cadastro</div><h1>${isEdit?'Editar extintor':'Novo extintor'}</h1></div></div>
+    <div class="panel">
+      <div class="grid2">
+        <div class="field"><label>Local</label>
+          <select id="f-local">${DB.locais.map(l=>`<option value="${l.id}" ${existing&&existing.localId===l.id?'selected':''}>${l.nome}</option>`).join('')}</select>
+        </div>
+        <div class="field"><label>Tipo de agente extintor</label>
+          <select id="f-tipo">${Object.entries(TIPOS).map(([k,v])=>`<option value="${k}" ${existing&&existing.tipo===k?'selected':''}>${v.label}</option>`).join('')}</select>
+        </div>
+      </div>
+      <div class="grid3">
+        <div class="field"><label>Capacidade</label><input type="text" id="f-cap" value="${existing?existing.capacidade||'':''}" placeholder="Ex.: 6 kg / 10 L"></div>
+        <div class="field"><label>Nº de série / patrimônio</label><input type="text" id="f-serie" value="${existing?existing.numeroSerie||'':''}" placeholder="Opcional"></div>
+        <div class="field"><label>Fabricante</label><input type="text" id="f-fab" value="${existing?existing.fabricante||'':''}" placeholder="Opcional"></div>
+      </div>
+      <div class="grid3">
+        <div class="field"><label>Data de fabricação</label><input type="date" id="f-datafab" value="${existing?existing.dataFabricacao||'':''}"></div>
+        <div class="field"><label>Última manutenção anual</label><input type="date" id="f-dataanual" value="${existing?existing.dataUltimaRecargaAnual||'':''}"></div>
+        <div class="field"><label>Último teste hidrostático</label><input type="date" id="f-datahidro" value="${existing?existing.dataUltimoHidrostatico||'':''}"></div>
+      </div>
+      <div class="form-actions">
+        ${isEdit?`<button class="btn btn-danger" id="btn-del-ext" style="margin-right:auto;">${ICONS.trash}Excluir</button>`:''}
+        <button class="btn btn-line" id="btn-cancel">Cancelar</button>
+        <button class="btn btn-primary" id="btn-save-ext">${isEdit?'Salvar alterações':'Cadastrar e gerar QR Code'}</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('btn-back').onclick=()=>nav(isEdit?'extintor-detalhe':'extintores', isEdit?{id:existing.id}:{});
+  document.getElementById('btn-cancel').onclick=()=>nav(isEdit?'extintor-detalhe':'extintores', isEdit?{id:existing.id}:{});
+  if(isEdit) document.getElementById('btn-del-ext').onclick=()=>{
+    confirmModal('Excluir extintor', `Excluir ${existing.codigo} e todo o histórico de inspeções vinculado? Esta ação não pode ser desfeita.`, ()=>{
+      DB.extintores = DB.extintores.filter(e=>e.id!==existing.id);
+      DB.inspecoes = DB.inspecoes.filter(i=>i.extintorId!==existing.id);
+      saveDB(); nav('extintores'); toast('Extintor excluído.');
+    });
+  };
+  document.getElementById('btn-save-ext').onclick=()=>{
+    const localId = document.getElementById('f-local').value;
+    if(!localId){ toast('Selecione um local.'); return; }
+    const data = {
+      localId,
+      tipo: document.getElementById('f-tipo').value,
+      capacidade: document.getElementById('f-cap').value.trim(),
+      numeroSerie: document.getElementById('f-serie').value.trim(),
+      fabricante: document.getElementById('f-fab').value.trim(),
+      dataFabricacao: document.getElementById('f-datafab').value,
+      dataUltimaRecargaAnual: document.getElementById('f-dataanual').value,
+      dataUltimoHidrostatico: document.getElementById('f-datahidro').value,
+    };
+    if(isEdit){
+      Object.assign(existing, data);
+      saveDB(); toast('Extintor atualizado.'); nav('extintor-detalhe',{id:existing.id});
+    } else {
+      const novo = {id:uid(), codigo:nextCodigo(), dataCadastro:todayISO(), ...data};
+      DB.extintores.push(novo); saveDB();
+      toast('Extintor cadastrado.');
+      nav('extintor-qr',{id:novo.id, fresh:true});
+    }
+  };
+}
+
+function renderExtintorDetalhe(id){
+  const ext = DB.extintores.find(e=>e.id===id);
+  if(!ext){ nav('extintores'); return; }
+  const local = DB.locais.find(l=>l.id===ext.localId);
+  const sM=statusMensal(ext), sA=statusAnual(ext), sH=statusHidro(ext);
+  const hist = inspecoesDoExtintor(id);
+
+  document.getElementById('content').innerHTML = `
+    <button class="btn btn-ghost" id="btn-back" style="margin-bottom:10px;">${ICONS.back}Voltar</button>
+    <div class="page-head">
+      <div><div class="eyebrow">${local?local.nome:'Sem local'}</div><h1 style="font-family:var(--font-mono);">${ext.codigo}</h1><div class="sub">${TIPOS[ext.tipo]?.label} ${ext.capacidade?(' · '+ext.capacidade):''}</div></div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-line" id="btn-qr">${ICONS.qr}QR Code</button>
+        <button class="btn btn-line" id="btn-edit">${ICONS.edit}Editar</button>
+        <button class="btn btn-primary" id="btn-insp">${ICONS.insp}Inspecionar</button>
+      </div>
+    </div>
+
+    <div class="stat-row" style="grid-template-columns:repeat(3,1fr);">
+      ${[sM,sA,sH].map(s=>`
+        <div class="stat acc-${s.status}">
+          <div class="n" style="font-size:14px;">${STATUS_LABEL[s.status]}</div>
+          <div class="l">${s.label} · próx. ${fmtDate(s.proxima)}</div>
+        </div>`).join('')}
+    </div>
+
+    <div class="panel">
+      <div style="font-size:12.5px;font-weight:600;color:var(--ink-soft);margin-bottom:10px;">Dados do equipamento</div>
+      <div class="grid3" style="gap:10px;">
+        <div><div class="eyebrow">Fabricante</div><div>${ext.fabricante||'—'}</div></div>
+        <div><div class="eyebrow">Nº série/patrimônio</div><div>${ext.numeroSerie||'—'}</div></div>
+        <div><div class="eyebrow">Fabricação</div><div>${fmtDate(ext.dataFabricacao)}</div></div>
+      </div>
+    </div>
+
+    <div class="section-title">Histórico de inspeções <span class="count">${hist.length}</span></div>
+    <div class="panel">
+      ${hist.length===0 ? emptyState('Nenhuma inspeção registrada ainda.', ICONS.hist) :
+        hist.map(h=> historyRow(h)).join('')}
+    </div>
+  `;
+  document.getElementById('btn-back').onclick=()=>nav('extintores');
+  document.getElementById('btn-qr').onclick=()=>nav('extintor-qr',{id});
+  document.getElementById('btn-edit').onclick=()=>nav('extintor-editar',{id});
+  document.getElementById('btn-insp').onclick=()=>nav('inspecao-form',{id});
+}
+function historyRow(h){
+  const tipoLabel = h.tipo==='mensal'?'Inspeção mensal':h.tipo==='anual'?'Manutenção anual':'Teste hidrostático';
+  // recupera o tipo do extintor para label correto do bico
+  const ext = DB.extintores.find(e=>e.id===h.extintorId);
+  let itemsHtml = '';
+  if(h.itens && Object.keys(h.itens).length > 0){
+    itemsHtml = `<div class="history-items">${Object.entries(h.itens).map(([k,v])=>
+      `<span class="hi ${v==='ok'?'ok':'nok'}">${getItemLabel(k, ext?.tipo)}: ${v==='ok'?'OK':'Não conforme'}</span>`).join('')}</div>`;
+  }
+  return `<div class="history-row">
+    <div class="history-date">${fmtDate(h.data)}</div>
+    <div class="history-body">
+      <b>${tipoLabel}</b> <span class="pill" style="margin-left:6px;">${h.inspetor?('· '+h.inspetor):''}</span>
+      ${h.empresa?`<div style="font-size:12px;color:var(--ink-soft);margin-top:2px;">Empresa: ${h.empresa}</div>`:''}
+      ${itemsHtml}
+      ${h.observacoes?`<div style="font-size:12.5px;color:var(--ink-soft);margin-top:6px;">${h.observacoes}</div>`:''}
+    </div>
+  </div>`;
+}
+
+/* ================= QR — gerar / imprimir ================= */
+function qrSvg(text, cellSize){
+  return QR.toSvg(text, cellSize||5, 3);
+}
+function renderExtintorQR(id, fresh){
+  const ext = DB.extintores.find(e=>e.id===id);
+  if(!ext){ nav('extintores'); return; }
+  const local = DB.locais.find(l=>l.id===ext.localId);
+  document.getElementById('content').innerHTML = `
+    <button class="btn btn-ghost no-print" id="btn-back" style="margin-bottom:10px;">${ICONS.back}Voltar</button>
+    ${fresh?`<div class="panel no-print" style="background:var(--primary-tint);border-color:var(--primary);margin-bottom:16px;font-size:13.5px;">Extintor <b>${ext.codigo}</b> cadastrado. Imprima o QR Code abaixo e cole no equipamento.</div>`:''}
+    <div class="page-head no-print"><div><div class="eyebrow">${local?local.nome:''}</div><h1>QR Code — ${ext.codigo}</h1></div>
+      <button class="btn btn-primary" id="btn-print">${ICONS.print}Imprimir etiqueta</button>
+    </div>
+    <div class="printtag" style="width:220px;">
+      <div class="qr-inner">${qrSvg(ext.codigo, 6)}</div>
+      <div class="pt-code">${ext.codigo}</div>
+      <div class="pt-name">${local?local.nome:''}</div>
+      <div class="pt-org">${DB.org} · Combate a incêndio</div>
+    </div>
+  `;
+  document.getElementById('btn-back').onclick=()=>nav('extintor-detalhe',{id});
+  document.getElementById('btn-print').onclick=()=>window.print();
+}
+
+function renderQRCodesPage(){
+  const filtroLocal = ROUTE.localId || '';
+  const list = DB.extintores.filter(e=> !filtroLocal || e.localId===filtroLocal).sort((a,b)=>a.codigo.localeCompare(b.codigo));
+  document.getElementById('content').innerHTML = `
+    <div class="page-head no-print">
+      <div><div class="eyebrow">Impressão</div><h1>QR Codes</h1><div class="sub">Gere e imprima as etiquetas para colar em cada extintor.</div></div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <select id="f-filtro-local">
+          <option value="">Todos os locais</option>
+          ${DB.locais.map(l=>`<option value="${l.id}" ${filtroLocal===l.id?'selected':''}>${l.nome}</option>`).join('')}
+        </select>
+        <button class="btn btn-primary" id="btn-print-all">${ICONS.print}Imprimir</button>
+      </div>
+    </div>
+    ${list.length===0 ? emptyState('Nenhum extintor para gerar QR Code.', ICONS.qr) : `
+    <div class="printgrid">
+      ${list.map(e=>{
+        const local = DB.locais.find(l=>l.id===e.localId);
+        return `<div class="printtag">
+          ${qrSvg(e.codigo,4)}
+          <div class="pt-code">${e.codigo}</div>
+          <div class="pt-name">${local?local.nome:''}</div>
+          <div class="pt-org">${DB.org} · Combate a incêndio</div>
+        </div>`;
+      }).join('')}
+    </div>`}
+  `;
+  document.getElementById('f-filtro-local').onchange=(e)=>{ ROUTE.localId = e.target.value; renderQRCodesPage(); };
+  document.getElementById('btn-print-all').onclick=()=>window.print();
+}
+
+/* ================= INSPEÇÃO — hub / scanner ================= */
+let scannerInstance = null;
+function stopScanner(){
+  if(scannerInstance){
+    try{ scannerInstance.stop().then(()=>scannerInstance.clear()).catch(()=>{}); }catch(e){}
+    scannerInstance = null;
+  }
+}
+function renderInspecaoHub(){
+  stopScanner();
+  const exts = [...DB.extintores].sort((a,b)=>a.codigo.localeCompare(b.codigo));
+  document.getElementById('content').innerHTML = `
+    <div class="page-head"><div><div class="eyebrow">Inspeção</div><h1>Iniciar inspeção</h1><div class="sub">Escaneie o QR Code do extintor ou selecione manualmente.</div></div></div>
+
+    <div class="panel">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div style="font-weight:600;font-size:14px;">Ler QR Code</div>
+        <button class="btn btn-line btn-sm" id="btn-toggle-scan">${ICONS.camera}Ativar câmera</button>
+      </div>
+      <div id="scan-area" style="margin-top:12px;"></div>
+      <div class="scanhelp">A leitura por câmera exige conexão segura (https) ou app instalado via navegador com permissão de câmera. Se não funcionar, use a busca manual abaixo.</div>
+    </div>
+
+    <div class="panel">
+      <div style="font-weight:600;font-size:14px;margin-bottom:10px;">Selecionar manualmente</div>
+      <div class="field" style="margin-bottom:0;">
+        <input type="text" id="f-busca" placeholder="Buscar por código ou local...">
+      </div>
+      <div id="manual-list" style="margin-top:12px;max-height:360px;overflow:auto;"></div>
+    </div>
+  `;
+  function renderManualList(filter){
+    const f = (filter||'').toLowerCase();
+    const filtered = exts.filter(e=>{
+      const local = DB.locais.find(l=>l.id===e.localId);
+      return !f || e.codigo.toLowerCase().includes(f) || (local && local.nome.toLowerCase().includes(f));
+    });
+    document.getElementById('manual-list').innerHTML = filtered.length===0? `<div style="color:var(--ink-faint);font-size:13px;padding:10px 0;">Nada encontrado.</div>` :
+      filtered.map(e=>{
+        const local = DB.locais.find(l=>l.id===e.localId);
+        return `<div class="tag st-${statusGeral(e)}" data-ext="${e.id}" style="cursor:pointer;">
+          <div class="tag-hole"></div>
+          <div class="tag-main">
+            <div class="tag-code">${e.codigo}</div>
+            <div class="tag-meta"><span>${local?local.nome:'Sem local'}</span></div>
+          </div>
+          <div class="tag-status">${STATUS_LABEL[statusGeral(e)]}</div>
+        </div>`;
+      }).join('');
+    document.querySelectorAll('#manual-list [data-ext]').forEach(t=> t.onclick=()=> nav('inspecao-form',{id:t.dataset.ext}));
+  }
+  renderManualList('');
+  document.getElementById('f-busca').oninput=(e)=> renderManualList(e.target.value);
+
+  let scanning = false;
+  document.getElementById('btn-toggle-scan').onclick=(ev)=>{
+    if(scanning){ stopScanner(); scanning=false; document.getElementById('scan-area').innerHTML=''; ev.target.innerHTML = ICONS.camera+'Ativar câmera'; return; }
+    document.getElementById('scan-area').innerHTML = `<div class="scan-frame"><div id="reader"></div></div>`;
+    if(typeof Html5Qrcode === 'undefined'){
+      document.getElementById('scan-area').innerHTML = `<div style="color:var(--danger);font-size:13px;">Não foi possível carregar o leitor de câmera (sem conexão com a internet). Use a busca manual.</div>`;
+      return;
+    }
+    scannerInstance = new Html5Qrcode("reader");
+    scannerInstance.start(
+      {facingMode:"environment"},
+      {fps:10, qrbox:230},
+      (decodedText)=>{
+        const codigo = decodedText.trim();
+        const found = DB.extintores.find(e=>e.codigo.toLowerCase()===codigo.toLowerCase());
+        stopScanner(); scanning=false;
+        if(found){ toast('Extintor '+found.codigo+' identificado.'); nav('inspecao-form',{id:found.id}); }
+        else { toast('QR Code não corresponde a nenhum extintor cadastrado.'); }
+      },
+      ()=>{}
+    ).then(()=>{ scanning=true; ev.target.innerHTML = ICONS.camera+'Desativar câmera'; })
+     .catch(()=>{ document.getElementById('scan-area').innerHTML = `<div style="color:var(--danger);font-size:13px;">Não foi possível acessar a câmera. Verifique as permissões do navegador ou use a busca manual.</div>`; });
+  };
+}
+
+/* ================= INSPEÇÃO — formulário ================= */
+function renderInspecaoForm(id){
+  const ext = DB.extintores.find(e=>e.id===id);
+  if(!ext){ nav('inspecao'); return; }
+  const local = DB.locais.find(l=>l.id===ext.localId);
+  const tipoInfo = TIPOS[ext.tipo] || {};
+  const itens = itensParaTipo(ext.tipo);
+
+  let modo = 'visual'; // 'visual' ou 'hidro'
+  const state = {
+    itens:{}, inspetor:'', data:todayISO(), observacoes:'',
+    tipoVisual: statusMensal(ext).status!=='ok' || statusAnual(ext).status==='ok' ? 'mensal' : 'anual',
+    // campos opcionais de manutenção/hidrostático disponíveis na aba visual
+    dataAnual:'', dataHidro:'', empresaHidro:'',
+  };
+  itens.forEach(k=> state.itens[k]='ok');
+
+  function readVisualFields(){
+    state.data       = document.getElementById('f-data')?.value || todayISO();
+    state.inspetor   = document.getElementById('f-inspetor')?.value.trim() || '';
+    state.observacoes= document.getElementById('f-obs')?.value.trim() || '';
+    state.tipoVisual = document.getElementById('f-tipovisual')?.value || state.tipoVisual;
+    state.dataAnual  = document.getElementById('f-data-anual-opt')?.value || '';
+    state.dataHidro  = document.getElementById('f-data-hidro-opt')?.value || '';
+    state.empresaHidro= document.getElementById('f-empresa-hidro-opt')?.value.trim() || '';
+  }
+
+  function paint(){
+    document.getElementById('content').innerHTML = `
+      <button class="btn btn-ghost" id="btn-back" style="margin-bottom:10px;">${ICONS.back}Voltar</button>
+      <div class="page-head"><div><div class="eyebrow">${local?local.nome:''} · ${ext.codigo}</div><h1>Registrar inspeção</h1><div class="sub">${TIPOS[ext.tipo]?.label}${ext.capacidade?' · '+ext.capacidade:''}</div></div></div>
+
+      <div class="panel">
+        <div class="seg" style="margin-bottom:16px;display:inline-flex;">
+          <button data-modo="visual" style="${modo==='visual'?'background:var(--accent);color:#fff;':''}">Inspeção visual / mensal</button>
+          <button data-modo="hidro"  style="${modo==='hidro' ?'background:var(--accent);color:#fff;':''}">Teste hidrostático</button>
+        </div>
+
+        ${modo==='visual' ? `
+          <div class="grid2">
+            <div class="field">
+              <label>Tipo de inspeção</label>
+              <select id="f-tipovisual">
+                <option value="mensal" ${state.tipoVisual==='mensal'?'selected':''}>Mensal (visual)</option>
+                <option value="anual"  ${state.tipoVisual==='anual' ?'selected':''}>Anual (manutenção)</option>
+              </select>
+            </div>
+            <div class="field"><label>Data da inspeção</label><input type="date" id="f-data" value="${state.data}"></div>
+          </div>
+          <div class="field" style="max-width:340px;">
+            <label>Inspetor responsável</label>
+            <input type="text" id="f-inspetor" placeholder="Nome do inspetor" value="${state.inspetor}">
+          </div>
+
+          <div style="font-weight:700;font-size:13px;margin:18px 0 10px 0;color:var(--ink);">Checklist de inspeção</div>
+          <div id="itens-list">
+            ${itens.map(k=>`
+              <div class="check-item">
+                <div><div class="ci-label">${getItemLabel(k, ext.tipo)}</div></div>
+                <div class="seg">
+                  <button data-item="${k}" data-val="ok"  class="sel-ok  ${state.itens[k]==='ok' ?'on':''}">Conforme</button>
+                  <button data-item="${k}" data-val="nok" class="sel-nok ${state.itens[k]==='nok'?'on':''}">Não conforme</button>
+                </div>
+              </div>`).join('')}
+          </div>
+
+          <div class="field" style="margin-top:10px;">
+            <label>Observações</label>
+            <textarea id="f-obs" placeholder="Detalhe não conformidades ou observações gerais">${state.observacoes}</textarea>
+          </div>
+
+          <div style="border-top:1px solid var(--line);margin:18px 0 14px 0;"></div>
+          <div style="font-weight:700;font-size:13px;margin-bottom:4px;color:var(--ink);">Registros de manutenção (opcional)</div>
+          <div style="font-size:12px;color:var(--ink-faint);margin-bottom:12px;">Preencha apenas se houver manutenção a registrar nesta visita. O cadastro do extintor será atualizado automaticamente.</div>
+          <div class="grid2">
+            <div class="field">
+              <label>Data da manutenção anual</label>
+              <input type="date" id="f-data-anual-opt" value="${state.dataAnual}">
+            </div>
+            <div class="field" style="display:flex;flex-direction:column;gap:6px;">
+              <label>Data do teste hidrostático</label>
+              <input type="date" id="f-data-hidro-opt" value="${state.dataHidro}">
+            </div>
+          </div>
+          <div class="field" style="max-width:340px;">
+            <label>Empresa responsável pelo hidrostático</label>
+            <input type="text" id="f-empresa-hidro-opt" placeholder="Empresa certificada (se aplicável)" value="${state.empresaHidro}">
+          </div>
+        ` : `
+          <div class="grid2">
+            <div class="field"><label>Data do teste hidrostático</label><input type="date" id="f-data-h" value="${state.data}"></div>
+            <div class="field"><label>Empresa/responsável pelo teste</label><input type="text" id="f-empresa" placeholder="Empresa certificada"></div>
+          </div>
+          <div class="field"><label>Observações</label><textarea id="f-obs-h" placeholder="Selo, laudo, observações..."></textarea></div>
+          <div class="panel" style="background:var(--primary-tint);border:none;font-size:12.5px;color:var(--primary);">Este registro atualiza a data-base do próximo teste hidrostático (validade de 5 anos).</div>
+        `}
+
+        <div class="form-actions">
+          <button class="btn btn-primary" id="btn-salvar-insp">Salvar inspeção</button>
+        </div>
+      </div>
+    `;
+    document.getElementById('btn-back').onclick=()=>{ readVisualFields(); nav('extintor-detalhe',{id}); };
+    document.querySelectorAll('[data-modo]').forEach(b=> b.onclick=()=>{ readVisualFields(); modo=b.dataset.modo; paint(); });
+    if(modo==='visual'){
+      document.getElementById('f-tipovisual').onchange=(e)=>{ state.tipoVisual=e.target.value; };
+      document.querySelectorAll('[data-item]').forEach(b=>{
+        b.onclick=()=>{ state.itens[b.dataset.item]=b.dataset.val; paint2ItemsOnly(); };
+      });
+    }
+    document.getElementById('btn-salvar-insp').onclick=()=> salvar();
+  }
+
+  function paint2ItemsOnly(){
+    document.querySelectorAll('.check-item').forEach((row,idx)=>{
+      const key = itens[idx];
+      row.querySelectorAll('.seg button').forEach(btn=>{
+        btn.classList.toggle('on', btn.dataset.val===state.itens[key]);
+      });
+    });
+  }
+
+  function salvar(){
+    if(modo==='visual'){
+      readVisualFields();
+      const {data, inspetor, observacoes, tipoVisual, dataAnual, dataHidro, empresaHidro} = state;
+      if(!inspetor){ toast('Informe o inspetor responsável.'); return; }
+
+      // Registro principal da inspeção visual/mensal
+      const registro = {id:uid(), extintorId:ext.id, tipo:tipoVisual, data, inspetor, itens:{...state.itens}, observacoes};
+      DB.inspecoes.push(registro);
+      if(tipoVisual==='anual') ext.dataUltimaRecargaAnual = data;
+
+      // Registro opcional de manutenção anual (se preenchido e diferente do tipo já selecionado)
+      if(dataAnual && tipoVisual !== 'anual'){
+        DB.inspecoes.push({id:uid(), extintorId:ext.id, tipo:'anual', data:dataAnual, inspetor, itens:{}, observacoes:'Registrado junto à inspeção de '+fmtDate(data)+'.'});
+        ext.dataUltimaRecargaAnual = dataAnual;
+      } else if(dataAnual && tipoVisual === 'anual'){
+        // tipoVisual já é anual — a data do campo principal é usada; campo opcional é ignorado se igual
+        if(dataAnual !== data){
+          ext.dataUltimaRecargaAnual = dataAnual; // sobrescreve com a data específica do campo opcional
+        }
+      }
+
+      // Registro opcional de teste hidrostático
+      if(dataHidro){
+        DB.inspecoes.push({id:uid(), extintorId:ext.id, tipo:'hidrostatico', data:dataHidro, empresa:empresaHidro, observacoes:'Registrado junto à inspeção de '+fmtDate(data)+'.'});
+        ext.dataUltimoHidrostatico = dataHidro;
+      }
+
+      saveDB();
+      const naoConf = Object.values(state.itens).some(v=>v==='nok');
+      const extras = [dataAnual?'manutenção anual':'', dataHidro?'hidrostático':''].filter(Boolean).join(' e ');
+      toast(naoConf
+        ? 'Inspeção registrada com não conformidades.' + (extras?' Também registrado: '+extras+'.':'')
+        : 'Inspeção registrada. Tudo conforme.' + (extras?' Também registrado: '+extras+'.':'')
+      );
+      nav('extintor-detalhe',{id});
+    } else {
+      const data = document.getElementById('f-data-h')?.value || todayISO();
+      const empresa = document.getElementById('f-empresa')?.value.trim() || '';
+      const obs = document.getElementById('f-obs-h')?.value.trim() || '';
+      const registro = {id:uid(), extintorId:ext.id, tipo:'hidrostatico', data, empresa, observacoes:obs};
+      DB.inspecoes.push(registro);
+      ext.dataUltimoHidrostatico = data;
+      saveDB();
+      toast('Teste hidrostático registrado.');
+      nav('extintor-detalhe',{id});
+    }
+  }
+  paint();
+}
+
+/* ================= HISTÓRICO GERAL ================= */
+function renderHistoricoGeral(){
+  const all = [...DB.inspecoes].sort((a,b)=> b.data.localeCompare(a.data));
+  document.getElementById('content').innerHTML = `
+    <div class="page-head"><div><div class="eyebrow">Registros</div><h1>Histórico de inspeções</h1><div class="sub">${all.length} registro${all.length!==1?'s':''} no total</div></div></div>
+    <div class="panel">
+      ${all.length===0 ? emptyState('Nenhuma inspeção registrada ainda.', ICONS.hist) :
+        all.map(h=>{
+          const ext = DB.extintores.find(e=>e.id===h.extintorId);
+          const local = ext ? DB.locais.find(l=>l.id===ext.localId) : null;
+          return `<div style="border-bottom:1px solid var(--line-soft);padding:12px 0;">
+            <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+              <div>
+                <b style="font-family:var(--font-mono);font-size:13px;">${ext?ext.codigo:'(excluído)'}</b>
+                <span style="font-size:12.5px;color:var(--ink-soft);"> · ${local?local.nome:''}</span>
+              </div>
+              <span style="font-size:12px;color:var(--ink-faint);">${fmtDate(h.data)}</span>
+            </div>
+            ${historyRow(h).replace('<div class="history-row">','<div>').replace(/<div class="history-date">.*?<\/div>/,'')}
+          </div>`;
+        }).join('')}
+    </div>
+  `;
+}
+
+/* ================= RELATÓRIO POR STATUS (Atenção / Vencidos) ================= */
+function renderRelatorioStatus(status){
+  const isDanger = status==='danger';
+  const label = isDanger ? 'Vencidos' : 'Atenção (vencendo)';
+  const rows = DB.extintores.map(e=>{
+    const items = [statusMensal(e), statusAnual(e), statusHidro(e)].filter(s=>s.status===status);
+    return {e, items};
+  }).filter(x=>x.items.length>0);
+  rows.sort((a,b)=>{
+    const da = Math.min(...a.items.map(i=> i.dias==null?9999:i.dias));
+    const db_ = Math.min(...b.items.map(i=> i.dias==null?9999:i.dias));
+    return da-db_;
+  });
+
+  document.getElementById('content').innerHTML = `
+    <button class="btn btn-ghost no-print" id="btn-back" style="margin-bottom:10px;">${ICONS.back}Voltar</button>
+    <div class="page-head">
+      <div><div class="eyebrow">Relatório</div><h1>Extintores — ${label}</h1><div class="sub">${rows.length} extintor${rows.length!==1?'es':''} · gerado em ${fmtDate(todayISO())}</div></div>
+      <button class="btn btn-primary no-print" id="btn-export-pdf">${ICONS.print}Exportar PDF</button>
+    </div>
+    <div class="panel">
+      ${rows.length===0 ? emptyState(isDanger? 'Nenhum extintor vencido no momento.' : 'Nenhum extintor vencendo no momento.', ICONS.insp) :
+        rows.map(r=>{
+          const local = DB.locais.find(l=>l.id===r.e.localId);
+          const itemsHtml = r.items.map(it=>{
+            const diasTxt = it.dias==null ? '' : (it.dias<0 ? `vencido há ${Math.abs(it.dias)} dia(s)` : `em ${it.dias} dia(s)`);
+            const cls = isDanger ? 'nok' : '';
+            const style = isDanger ? '' : 'background:var(--warn-bg);color:var(--warn);';
+            return `<span class="hi ${cls}" style="${style}">${it.label} · ${fmtDate(it.proxima)}${diasTxt?(' · '+diasTxt):''}</span>`;
+          }).join('');
+          return `<div class="tag st-${status}" data-ext="${r.e.id}">
+            <div class="tag-hole"></div>
+            <div class="tag-main">
+              <div class="tag-code">${r.e.codigo} <span class="badge-type">${TIPOS[r.e.tipo]?.label.split(' (')[1]?.replace(')','')||r.e.tipo}</span></div>
+              <div class="tag-name">${local? local.nome : 'Sem local'}</div>
+              <div class="history-items" style="margin-top:7px;">${itemsHtml}</div>
+            </div>
+          </div>`;
+        }).join('')
+      }
+    </div>
+  `;
+  document.getElementById('btn-back').onclick=()=>nav('dashboard');
+  document.querySelectorAll('.tag[data-ext]').forEach(t=>{
+    t.querySelector('.tag-main').onclick=()=> nav('extintor-detalhe',{id:t.dataset.ext});
+  });
+  const exportBtn = document.getElementById('btn-export-pdf');
+  if(exportBtn) exportBtn.onclick=()=>window.print();
+}
+
+/* ================= EXTRA VIEWS ================= */
+function renderExtintorDetalheOnly(){ renderExtintorDetalhe(ROUTE.id); }
+
+/* ================= MAIN RENDER ================= */
+function render(){
+  renderSidebar();
+  switch(ROUTE.view){
+    case 'dashboard': renderDashboard(); break;
+    case 'locais': renderLocais(); break;
+    case 'extintores': renderExtintores(); break;
+    case 'extintor-novo': renderExtintorForm(null); break;
+    case 'extintor-editar': renderExtintorForm(DB.extintores.find(e=>e.id===ROUTE.id)); break;
+    case 'extintor-detalhe': renderExtintorDetalhe(ROUTE.id); break;
+    case 'extintor-qr': renderExtintorQR(ROUTE.id, ROUTE.fresh); break;
+    case 'qrcodes': renderQRCodesPage(); break;
+    case 'inspecao': renderInspecaoHub(); break;
+    case 'inspecao-form': renderInspecaoForm(ROUTE.id); break;
+    case 'historico': renderHistoricoGeral(); break;
+    case 'relatorio-status': renderRelatorioStatus(ROUTE.status); break;
+    default: renderDashboard();
+  }
+}
+
+/* ---------- INIT ---------- */
+(function init(){
+  const v = location.hash.replace('#','');
+  ROUTE = {view: v || 'dashboard'};
+  render();
+})();
+</script>
+</body>
+</html>
