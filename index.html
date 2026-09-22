@@ -512,109 +512,227 @@ const QR = (function(){
   return {generate, toSvg};
 })();
 
-/* ---------- STORAGE ---------- */
+/* ---------- SUPABASE ---------- */
+const SUPA_URL  = 'https://norapizusjjofexumanr.supabase.co';
+const SUPA_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5vcmFwaXp1c2pqb2ZleHVtYW5yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk2NDQ3MjYsImV4cCI6MjEwNTIyMDcyNn0.2yEuL7wyro4B9Btw-e30SW0HNy5njkpHMmjRcN6pGMY';
+const SUPA_HDR  = {'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY};
+
+async function supa(method, table, body, params){
+  let url = SUPA_URL+'/rest/v1/'+table;
+  if(params) url += '?'+params;
+  const opts = {method, headers:{...SUPA_HDR}};
+  if(body) opts.body = JSON.stringify(body);
+  if(method==='GET') opts.headers['Accept'] = 'application/json';
+  if(method==='POST') opts.headers['Prefer'] = 'return=minimal';
+  if(method==='PATCH') opts.headers['Prefer'] = 'return=minimal';
+  const r = await fetch(url, opts);
+  if(!r.ok){ const t=await r.text(); throw new Error(table+' '+method+': '+t); }
+  if(method==='GET') return r.json();
+  return true;
+}
+async function supaGet(table, params){ return supa('GET',table,null,params); }
+async function supaPost(table, body){ return supa('POST',table,body); }
+async function supaPatch(table, body, params){ return supa('PATCH',table,body,params); }
+async function supaDelete(table, params){ return supa('DELETE',table,null,params); }
+
+/* ---------- STORAGE (localStorage como cache + Supabase como fonte de verdade) ---------- */
 const DB_KEY = 'ext_app_v1';
 
-// Detecta se o localStorage realmente funciona neste navegador/contexto.
-// Importante no Safari: abrir o arquivo direto (file://) pode bloquear ou
-// não persistir o armazenamento entre sessões.
 function testStorage(){
-  try{
-    const k = '__ext_storage_test__';
-    localStorage.setItem(k,'1');
-    localStorage.removeItem(k);
-    return true;
-  }catch(e){ return false; }
+  try{ localStorage.setItem('__t__','1'); localStorage.removeItem('__t__'); return true; }catch(e){ return false; }
 }
 const STORAGE_OK = testStorage();
 
-function loadDB(){
-  try{
-    const raw = localStorage.getItem(DB_KEY);
-    if(raw) return JSON.parse(raw);
-  }catch(e){}
-  return {locais:[], extintores:[], inspecoes:[], seq:0, org:'TIMBRO TRADING S.A.'};
+function dbEmpty(){ return {locais:[], extintores:[], inspecoes:[], seq:0, org:'TIMBRO TRADING S.A.'}; }
+
+function loadDBLocal(){
+  try{ const r=localStorage.getItem(DB_KEY); if(r) return JSON.parse(r); }catch(e){}
+  return dbEmpty();
 }
-let DB = loadDB();
-// Garante que o nome da organização sempre reflita o valor atual,
-// mesmo em dados salvos com o nome anterior.
-if(!DB.org || DB.org === 'FIBRASA S.A.') {
-  DB.org = 'TIMBRO TRADING S.A.';
-  saveDB();
+let DB = loadDBLocal();
+if(!DB.org || DB.org==='FIBRASA S.A.') DB.org='TIMBRO TRADING S.A.';
+
+function saveDBLocal(){
+  try{ localStorage.setItem(DB_KEY, JSON.stringify(DB)); }catch(e){}
 }
-let saveFailed = false;
-function saveDB(){
+
+// Converte linha do Supabase → objeto interno do app
+function rowToLocal(row){
+  return {
+    id:row.id, localId:row.local_id, codigo:row.codigo, tipo:row.tipo,
+    capacidade:row.capacidade||'', numeroSerie:row.numero_serie||'',
+    fabricante:row.fabricante||'', dataFabricacao:row.data_fabricacao||'',
+    dataUltimaRecargaAnual:row.data_ultima_recarga_anual||'',
+    dataUltimoHidrostatico:row.data_ultimo_hidrostatico||'',
+    dataCadastro:row.data_cadastro||'',
+  };
+}
+function rowToInsp(row){
+  return {
+    id:row.id, extintorId:row.extintor_id, tipo:row.tipo, data:row.data,
+    inspetor:row.inspetor||'', empresa:row.empresa||'',
+    itens:row.itens||{}, observacoes:row.observacoes||'',
+  };
+}
+
+// Carrega tudo do Supabase e atualiza DB + cache local
+async function syncFromSupabase(){
   try{
-    localStorage.setItem(DB_KEY, JSON.stringify(DB));
-    saveFailed = false;
+    showSyncStatus('Sincronizando…');
+    const [locais, exts, insps, cfgs] = await Promise.all([
+      supaGet('locais','select=id,nome,descricao&order=created_at.asc'),
+      supaGet('extintores','select=*&order=created_at.asc'),
+      supaGet('inspecoes','select=*&order=data.desc'),
+      supaGet('configuracoes','select=chave,valor'),
+    ]);
+    DB.locais    = locais.map(r=>({id:r.id, nome:r.nome, descricao:r.descricao||''}));
+    DB.extintores= exts.map(rowToLocal);
+    DB.inspecoes = insps.map(rowToInsp);
+    const seqRow = cfgs.find(c=>c.chave==='seq');
+    DB.seq = seqRow ? parseInt(seqRow.valor)||0 : 0;
+    const orgRow = cfgs.find(c=>c.chave==='org');
+    DB.org = orgRow ? orgRow.valor : 'TIMBRO TRADING S.A.';
+    saveDBLocal();
+    hideSyncStatus();
+    return true;
   }catch(e){
-    const wasOk = !saveFailed;
-    saveFailed = true;
-    console.error('Falha ao salvar dados:', e);
-    if(wasOk) toast('Não foi possível salvar. Exporte um backup para não perder seus dados.');
+    console.error('Sync falhou:', e);
+    hideSyncStatus();
+    return false;
   }
 }
-function uid(){ return 'id' + Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
-function nextCodigo(){ DB.seq = (DB.seq||0)+1; saveDB(); return 'EXT-' + String(DB.seq).padStart(4,'0'); }
 
-/* ---------- BACKUP (exportar / importar) ----------
-   Independente do localStorage funcionar de forma confiável neste
-   navegador, isso garante uma cópia dos dados que o usuário controla. */
+let _syncEl = null;
+function showSyncStatus(msg){
+  if(!_syncEl){ _syncEl=document.createElement('div'); _syncEl.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--primary);color:#fff;padding:8px 16px;border-radius:8px;font-size:12.5px;z-index:300;'; document.body.appendChild(_syncEl); }
+  _syncEl.textContent=msg; _syncEl.style.display='block';
+}
+function hideSyncStatus(){ if(_syncEl) _syncEl.style.display='none'; }
+
+function uid(){ return 'id'+Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
+
+async function nextCodigo(){
+  DB.seq=(DB.seq||0)+1;
+  const novoSeq=DB.seq;
+  try{ await supaPatch('configuracoes',{valor:String(novoSeq)},'chave=eq.seq'); }catch(e){}
+  saveDBLocal();
+  return 'EXT-'+String(novoSeq).padStart(4,'0');
+}
+
+// ---- CRUD LOCAL → salva localmente e sobe para o Supabase ----
+
+async function salvarLocal(local){
+  // upsert local
+  try{
+    await supaPost('locais', {id:local.id, nome:local.nome, descricao:local.descricao||''});
+  }catch(e){
+    // pode já existir — tenta patch
+    try{ await supaPatch('locais',{nome:local.nome, descricao:local.descricao||''},'id=eq.'+local.id); }catch(e2){}
+  }
+  saveDBLocal();
+}
+async function excluirLocal(id){
+  try{ await supaDelete('locais','id=eq.'+id); }catch(e){ console.error(e); }
+  saveDBLocal();
+}
+async function salvarExtintor(ext){
+  const row = {
+    id:ext.id, codigo:ext.codigo, local_id:ext.localId||null, tipo:ext.tipo,
+    capacidade:ext.capacidade||null, numero_serie:ext.numeroSerie||null,
+    fabricante:ext.fabricante||null, data_fabricacao:ext.dataFabricacao||null,
+    data_ultima_recarga_anual:ext.dataUltimaRecargaAnual||null,
+    data_ultimo_hidrostatico:ext.dataUltimoHidrostatico||null,
+    data_cadastro:ext.dataCadastro||todayISO(),
+  };
+  try{
+    await supaPost('extintores', row);
+  }catch(e){
+    try{ await supaPatch('extintores', row, 'id=eq.'+ext.id); }catch(e2){ console.error(e2); }
+  }
+  saveDBLocal();
+}
+async function atualizarExtintor(ext){
+  const row = {
+    local_id:ext.localId||null, tipo:ext.tipo,
+    capacidade:ext.capacidade||null, numero_serie:ext.numeroSerie||null,
+    fabricante:ext.fabricante||null, data_fabricacao:ext.dataFabricacao||null,
+    data_ultima_recarga_anual:ext.dataUltimaRecargaAnual||null,
+    data_ultimo_hidrostatico:ext.dataUltimoHidrostatico||null,
+  };
+  try{ await supaPatch('extintores', row, 'id=eq.'+ext.id); }catch(e){ console.error(e); }
+  saveDBLocal();
+}
+async function excluirExtintor(id){
+  try{ await supaDelete('extintores','id=eq.'+id); }catch(e){ console.error(e); }
+  saveDBLocal();
+}
+async function salvarInspecao(insp){
+  const row = {
+    id:insp.id, extintor_id:insp.extintorId, tipo:insp.tipo, data:insp.data,
+    inspetor:insp.inspetor||null, empresa:insp.empresa||null,
+    itens:insp.itens||{}, observacoes:insp.observacoes||null,
+  };
+  try{ await supaPost('inspecoes', row); }catch(e){ console.error(e); }
+  saveDBLocal();
+}
+
+/* ---------- BACKUP (exportar / importar) ---------- */
 function exportBackup(){
   const blob = new Blob([JSON.stringify(DB, null, 2)], {type:'application/json'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  const stamp = todayISO();
-  a.href = url;
-  a.download = `extintores-backup-${stamp}.json`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
+  a.href=url; a.download=`extintores-backup-${todayISO()}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
   setTimeout(()=>URL.revokeObjectURL(url), 2000);
 }
-function importBackupFile(file, onDone){
+async function importBackupFile(file, onDone){
   const reader = new FileReader();
-  reader.onload = ()=>{
+  reader.onload = async ()=>{
     try{
       const parsed = JSON.parse(reader.result);
-      if(!parsed || !Array.isArray(parsed.locais) || !Array.isArray(parsed.extintores) || !Array.isArray(parsed.inspecoes)){
-        onDone(false, 'Arquivo não reconhecido como backup válido.');
-        return;
+      if(!parsed||!Array.isArray(parsed.locais)||!Array.isArray(parsed.extintores)||!Array.isArray(parsed.inspecoes)){
+        onDone(false,'Arquivo não reconhecido como backup válido.'); return;
       }
       DB = {locais:parsed.locais, extintores:parsed.extintores, inspecoes:parsed.inspecoes, seq:parsed.seq||0, org:parsed.org||'TIMBRO TRADING S.A.'};
-      saveDB();
+      saveDBLocal();
+      // Sobe tudo para o Supabase
+      showSyncStatus('Enviando backup para o servidor…');
+      for(const l of DB.locais) await salvarLocal(l);
+      for(const e of DB.extintores) await salvarExtintor(e);
+      for(const i of DB.inspecoes) await salvarInspecao(i);
+      try{ await supaPatch('configuracoes',{valor:String(DB.seq)},'chave=eq.seq'); }catch(e){}
+      hideSyncStatus();
       onDone(true);
-    }catch(e){
-      onDone(false, 'Não foi possível ler o arquivo (JSON inválido).');
-    }
+    }catch(e){ hideSyncStatus(); onDone(false,'Erro ao importar: '+e.message); }
   };
-  reader.onerror = ()=> onDone(false, 'Erro ao ler o arquivo.');
+  reader.onerror=()=>onDone(false,'Erro ao ler o arquivo.');
   reader.readAsText(file);
 }
 function openBackupModal(){
-  const root = document.getElementById('modalroot');
-  root.innerHTML = `<div class="modal-overlay" id="ovl"><div class="modal">
+  const root=document.getElementById('modalroot');
+  root.innerHTML=`<div class="modal-overlay" id="ovl"><div class="modal">
     <h3>Backup de dados</h3>
-    <p>${STORAGE_OK ? 'Seus dados ficam salvos neste navegador. Exportar um backup periodicamente evita perda de dados caso o armazenamento local seja limpo.' : '<b style="color:var(--danger);">Este navegador não está conseguindo salvar dados localmente.</b> Exporte um backup ao final de cada uso e importe-o na próxima vez.'}</p>
+    <p>Dados sincronizados com o Supabase. O backup local serve como cópia de segurança extra.</p>
     <div style="display:flex;flex-direction:column;gap:10px;">
       <button class="btn btn-primary" id="btn-export" style="justify-content:center;">${ICONS.print}Exportar backup (.json)</button>
       <label class="btn btn-line" style="justify-content:center;cursor:pointer;">
         ${ICONS.edit}Importar backup (.json)
         <input type="file" accept="application/json" id="f-import" style="display:none;">
       </label>
+      <button class="btn btn-line" id="btn-sync" style="justify-content:center;">${ICONS.hist}Sincronizar agora</button>
     </div>
     <div class="form-actions"><button class="btn btn-ghost" id="mclose">Fechar</button></div>
   </div></div>`;
   document.getElementById('mclose').onclick=()=>root.innerHTML='';
   document.getElementById('ovl').onclick=(e)=>{ if(e.target.id==='ovl') root.innerHTML=''; };
   document.getElementById('btn-export').onclick=()=>{ exportBackup(); toast('Backup exportado.'); };
+  document.getElementById('btn-sync').onclick=async ()=>{ root.innerHTML=''; await syncFromSupabase(); render(); toast('Sincronização concluída.'); };
   document.getElementById('f-import').onchange=(e)=>{
-    const file = e.target.files[0];
-    if(!file) return;
-    confirmModal('Importar backup', 'Isso substitui todos os dados atuais pelos dados do arquivo selecionado. Deseja continuar?', ()=>{
-      importBackupFile(file, (ok, msg)=>{
-        if(ok){ toast('Backup importado com sucesso.'); root.innerHTML=''; render(); }
-        else { toast(msg || 'Falha ao importar.'); }
+    const file=e.target.files[0]; if(!file) return;
+    confirmModal('Importar backup','Isso substitui todos os dados atuais pelos dados do arquivo. Os dados também serão enviados ao servidor. Deseja continuar?',()=>{
+      importBackupFile(file,(ok,msg)=>{
+        if(ok){ toast('Backup importado e enviado ao servidor.'); root.innerHTML=''; render(); }
+        else { toast(msg||'Falha ao importar.'); }
       });
     });
   };
@@ -746,7 +864,7 @@ function renderSidebar(){
         </button>`).join('')}
     </nav>
     <div class="sidebar-foot">
-      ${!STORAGE_OK ? `<div style="color:#F5BFCC;font-weight:600;margin-bottom:6px;">⚠ Armazenamento indisponível neste navegador — exporte um backup ao sair.</div>` : ''}
+      ${''/* aviso de storage removido — dados sincronizados via Supabase */}
       <button id="btn-open-backup" style="background:none;border:none;color:#A8BBDA;font-size:11px;text-decoration:underline;cursor:pointer;padding:0;font-weight:600;">Backup de dados</button>
       <div style="margin-top:6px;">SSMA · Gestão de equipamentos de combate a incêndio</div>
     </div>
@@ -761,7 +879,7 @@ function renderSidebar(){
       <b style="font-size:14.5px;">Extintores</b>
     </div>
     <div style="display:flex;align-items:center;gap:10px;">
-      ${!STORAGE_OK ? `<span style="font-size:16px;" title="Armazenamento indisponível">⚠</span>`:''}
+      ${''/* aviso storage removido */}
       ${pendenciasCount()>0 ? `<span class="nav-badge" style="position:static;">${pendenciasCount()} pendente${pendenciasCount()>1?'s':''}</span>`:''}
       <button id="btn-open-backup-mobile" style="background:none;border:1px solid rgba(255,255,255,.3);border-radius:6px;color:#fff;font-size:11px;padding:4px 8px;cursor:pointer;">Backup</button>
     </div>
@@ -893,8 +1011,10 @@ function renderLocais(){
     row.querySelector('.act-edit').onclick=()=>openLocalForm(DB.locais.find(l=>l.id===id));
     row.querySelector('.act-del').onclick=()=>{
       const count = DB.extintores.filter(e=>e.localId===id).length;
-      confirmModal('Excluir local', count>0? `Este local tem ${count} extintor(es) vinculado(s). Excluir mesmo assim? Os extintores ficarão sem local.` : 'Tem certeza que deseja excluir este local?', ()=>{
-        DB.locais = DB.locais.filter(l=>l.id!==id); saveDB(); renderLocais(); toast('Local excluído.');
+      confirmModal('Excluir local', count>0? `Este local tem ${count} extintor(es) vinculado(s). Excluir mesmo assim? Os extintores ficarão sem local.` : 'Tem certeza que deseja excluir este local?', async ()=>{
+        DB.locais = DB.locais.filter(l=>l.id!==id);
+        await excluirLocal(id);
+        renderLocais(); toast('Local excluído.');
       });
     };
   });
@@ -912,13 +1032,15 @@ function openLocalForm(local){
   </div></div>`;
   document.getElementById('mcancel').onclick=()=>root.innerHTML='';
   document.getElementById('ovl').onclick=(e)=>{ if(e.target.id==='ovl') root.innerHTML=''; };
-  document.getElementById('msave').onclick=()=>{
+  document.getElementById('msave').onclick=async ()=>{
     const nome = document.getElementById('f-nome').value.trim();
     if(!nome){ toast('Informe o nome do local.'); return; }
     const desc = document.getElementById('f-desc').value.trim();
     if(local){ local.nome=nome; local.descricao=desc; }
-    else { DB.locais.push({id:uid(), nome, descricao:desc}); }
-    saveDB(); root.innerHTML=''; renderLocais(); toast('Local salvo.');
+    else { const novo={id:uid(), nome, descricao:desc}; DB.locais.push(novo); }
+    const alvo = local || DB.locais[DB.locais.length-1];
+    await salvarLocal(alvo);
+    root.innerHTML=''; renderLocais(); toast('Local salvo.');
   };
 }
 
@@ -976,13 +1098,14 @@ function renderExtintorForm(existing){
   document.getElementById('btn-back').onclick=()=>nav(isEdit?'extintor-detalhe':'extintores', isEdit?{id:existing.id}:{});
   document.getElementById('btn-cancel').onclick=()=>nav(isEdit?'extintor-detalhe':'extintores', isEdit?{id:existing.id}:{});
   if(isEdit) document.getElementById('btn-del-ext').onclick=()=>{
-    confirmModal('Excluir extintor', `Excluir ${existing.codigo} e todo o histórico de inspeções vinculado? Esta ação não pode ser desfeita.`, ()=>{
+    confirmModal('Excluir extintor', `Excluir ${existing.codigo} e todo o histórico de inspeções vinculado? Esta ação não pode ser desfeita.`, async ()=>{
       DB.extintores = DB.extintores.filter(e=>e.id!==existing.id);
-      DB.inspecoes = DB.inspecoes.filter(i=>i.extintorId!==existing.id);
-      saveDB(); nav('extintores'); toast('Extintor excluído.');
+      DB.inspecoes  = DB.inspecoes.filter(i=>i.extintorId!==existing.id);
+      await excluirExtintor(existing.id);
+      nav('extintores'); toast('Extintor excluído.');
     });
   };
-  document.getElementById('btn-save-ext').onclick=()=>{
+  document.getElementById('btn-save-ext').onclick=async ()=>{
     const localId = document.getElementById('f-local').value;
     if(!localId){ toast('Selecione um local.'); return; }
     const data = {
@@ -997,10 +1120,13 @@ function renderExtintorForm(existing){
     };
     if(isEdit){
       Object.assign(existing, data);
-      saveDB(); toast('Extintor atualizado.'); nav('extintor-detalhe',{id:existing.id});
+      await atualizarExtintor(existing);
+      toast('Extintor atualizado.'); nav('extintor-detalhe',{id:existing.id});
     } else {
-      const novo = {id:uid(), codigo:nextCodigo(), dataCadastro:todayISO(), ...data};
-      DB.extintores.push(novo); saveDB();
+      const codigo = await nextCodigo();
+      const novo = {id:uid(), codigo, dataCadastro:todayISO(), ...data};
+      DB.extintores.push(novo);
+      await salvarExtintor(novo);
       toast('Extintor cadastrado.');
       nav('extintor-qr',{id:novo.id, fresh:true});
     }
@@ -1339,35 +1465,41 @@ function renderInspecaoForm(id){
     });
   }
 
-  function salvar(){
+  async function salvar(){
     if(modo==='visual'){
       readVisualFields();
       const {data, inspetor, observacoes, tipoVisual, dataAnual, dataHidro, empresaHidro} = state;
       if(!inspetor){ toast('Informe o inspetor responsável.'); return; }
 
-      // Registro principal da inspeção visual/mensal
+      // Registro principal
       const registro = {id:uid(), extintorId:ext.id, tipo:tipoVisual, data, inspetor, itens:{...state.itens}, observacoes};
       DB.inspecoes.push(registro);
       if(tipoVisual==='anual') ext.dataUltimaRecargaAnual = data;
+      await salvarInspecao(registro);
+      await atualizarExtintor(ext);
 
-      // Registro opcional de manutenção anual (se preenchido e diferente do tipo já selecionado)
+      // Registro opcional de manutenção anual
       if(dataAnual && tipoVisual !== 'anual'){
-        DB.inspecoes.push({id:uid(), extintorId:ext.id, tipo:'anual', data:dataAnual, inspetor, itens:{}, observacoes:'Registrado junto à inspeção de '+fmtDate(data)+'.'});
+        const rAnual = {id:uid(), extintorId:ext.id, tipo:'anual', data:dataAnual, inspetor, itens:{}, observacoes:'Registrado junto à inspeção de '+fmtDate(data)+'.'};
+        DB.inspecoes.push(rAnual);
         ext.dataUltimaRecargaAnual = dataAnual;
-      } else if(dataAnual && tipoVisual === 'anual'){
-        // tipoVisual já é anual — a data do campo principal é usada; campo opcional é ignorado se igual
-        if(dataAnual !== data){
-          ext.dataUltimaRecargaAnual = dataAnual; // sobrescreve com a data específica do campo opcional
-        }
+        await salvarInspecao(rAnual);
+        await atualizarExtintor(ext);
+      } else if(dataAnual && tipoVisual === 'anual' && dataAnual !== data){
+        ext.dataUltimaRecargaAnual = dataAnual;
+        await atualizarExtintor(ext);
       }
 
-      // Registro opcional de teste hidrostático
+      // Registro opcional de hidrostático
       if(dataHidro){
-        DB.inspecoes.push({id:uid(), extintorId:ext.id, tipo:'hidrostatico', data:dataHidro, empresa:empresaHidro, observacoes:'Registrado junto à inspeção de '+fmtDate(data)+'.'});
+        const rHidro = {id:uid(), extintorId:ext.id, tipo:'hidrostatico', data:dataHidro, empresa:empresaHidro, observacoes:'Registrado junto à inspeção de '+fmtDate(data)+'.'};
+        DB.inspecoes.push(rHidro);
         ext.dataUltimoHidrostatico = dataHidro;
+        await salvarInspecao(rHidro);
+        await atualizarExtintor(ext);
       }
 
-      saveDB();
+      saveDBLocal();
       const naoConf = Object.values(state.itens).some(v=>v==='nok');
       const extras = [dataAnual?'manutenção anual':'', dataHidro?'hidrostático':''].filter(Boolean).join(' e ');
       toast(naoConf
@@ -1382,7 +1514,9 @@ function renderInspecaoForm(id){
       const registro = {id:uid(), extintorId:ext.id, tipo:'hidrostatico', data, empresa, observacoes:obs};
       DB.inspecoes.push(registro);
       ext.dataUltimoHidrostatico = data;
-      saveDB();
+      await salvarInspecao(registro);
+      await atualizarExtintor(ext);
+      saveDBLocal();
       toast('Teste hidrostático registrado.');
       nav('extintor-detalhe',{id});
     }
@@ -1490,9 +1624,14 @@ function render(){
 
 /* ---------- INIT ---------- */
 (function init(){
+  // Carrega cache local imediatamente (evita tela em branco)
   ROUTE = parseHash(location.hash);
   if(ROUTE._notFound) toast('Extintor "'+ROUTE._notFound+'" não encontrado. Verifique o cadastro.');
   render();
+  // Sincroniza com Supabase em background e re-renderiza
+  syncFromSupabase().then(ok=>{
+    if(ok) render();
+  });
 })();
 </script>
 </body>
