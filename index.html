@@ -570,7 +570,7 @@ function testStorage(){
 }
 const STORAGE_OK = testStorage();
 
-function dbEmpty(){ return {locais:[], extintores:[], inspecoes:[], seq:0, org:'TIMBRO TRADING S.A.'}; }
+function dbEmpty(){ return {locais:[], extintores:[], mangueiras:[], inspecoes:[], inspecoesMangueiras:[], seq:0, mangueiraSeq:0, org:'TIMBRO TRADING S.A.'}; }
 
 function loadDBLocal(){
   try{ const r=localStorage.getItem(DB_KEY); if(r) return JSON.parse(r); }catch(e){}
@@ -602,22 +602,41 @@ function rowToInsp(row){
     itens:row.itens||{}, observacoes:row.observacoes||'',
   };
 }
+function rowToMangueira(row){
+  return {
+    id:row.id, codigo:row.codigo, localId:row.local_id, tipo:row.tipo,
+    metragem:row.metragem, dataUltimoTeste:row.data_ultimo_teste||'',
+    pontoInstalacao:row.ponto_instalacao||'', dataCadastro:row.data_cadastro||'',
+  };
+}
+function rowToInspMangueira(row){
+  return {
+    id:row.id, mangueiraId:row.mangueira_id, data:row.data,
+    inspetor:row.inspetor||'', itens:row.itens||{}, observacoes:row.observacoes||'',
+  };
+}
 
 // Carrega tudo do Supabase e atualiza DB + cache local
 async function syncFromSupabase(){
   try{
     showSyncStatus('Sincronizando…');
-    const [locais, exts, insps, cfgs] = await Promise.all([
+    const [locais, exts, mangs, insps, inspMangs, cfgs] = await Promise.all([
       supaGet('locais','select=id,nome,descricao&order=created_at.asc'),
       supaGet('extintores','select=*&order=created_at.asc'),
+      supaGet('mangueiras','select=*&order=created_at.asc'),
       supaGet('inspecoes','select=*&order=data.desc'),
+      supaGet('inspecoes_mangueiras','select=*&order=data.desc'),
       supaGet('configuracoes','select=chave,valor'),
     ]);
     DB.locais    = locais.map(r=>({id:r.id, nome:r.nome, descricao:r.descricao||''}));
     DB.extintores= exts.map(rowToLocal);
+    DB.mangueiras= mangs.map(rowToMangueira);
     DB.inspecoes = insps.map(rowToInsp);
+    DB.inspecoesMangueiras = inspMangs.map(rowToInspMangueira);
     const seqRow = cfgs.find(c=>c.chave==='seq');
     DB.seq = seqRow ? parseInt(seqRow.valor)||0 : 0;
+    const mangSeqRow = cfgs.find(c=>c.chave==='mangueira_seq');
+    DB.mangueiraSeq = mangSeqRow ? parseInt(mangSeqRow.valor)||0 : 0;
     const orgRow = cfgs.find(c=>c.chave==='org');
     DB.org = orgRow ? orgRow.valor : 'TIMBRO TRADING S.A.';
     saveDBLocal();
@@ -696,6 +715,35 @@ async function excluirExtintor(id){
   try{ await supaDelete('extintores','id=eq.'+id); }catch(e){ console.error(e); }
   saveDBLocal();
 }
+async function nextCodigoMangueira(){
+  DB.mangueiraSeq=(DB.mangueiraSeq||0)+1;
+  const novoSeq=DB.mangueiraSeq;
+  try{ await supaPatch('configuracoes',{valor:String(novoSeq)},'chave=eq.mangueira_seq'); }catch(e){
+    try{ await supaPost('configuracoes',{chave:'mangueira_seq',valor:String(novoSeq)}); }catch(e2){}
+  }
+  saveDBLocal();
+  return 'MAN-'+String(novoSeq).padStart(4,'0');
+}
+async function salvarMangueira(m){
+  const row={id:m.id,codigo:m.codigo,local_id:m.localId||null,tipo:m.tipo,metragem:m.metragem,data_ultimo_teste:m.dataUltimoTeste||null,ponto_instalacao:m.pontoInstalacao||null,data_cadastro:m.dataCadastro||todayISO()};
+  try{ await supaPost('mangueiras',row); }catch(e){ try{ await supaPatch('mangueiras',row,'id=eq.'+m.id); }catch(e2){ console.error(e2); } }
+  saveDBLocal();
+}
+async function atualizarMangueira(m){
+  const row={local_id:m.localId||null,tipo:m.tipo,metragem:m.metragem,data_ultimo_teste:m.dataUltimoTeste||null,ponto_instalacao:m.pontoInstalacao||null};
+  try{ await supaPatch('mangueiras',row,'id=eq.'+m.id); }catch(e){ console.error(e); }
+  saveDBLocal();
+}
+async function excluirMangueira(id){
+  try{ await supaDelete('mangueiras','id=eq.'+id); }catch(e){ console.error(e); }
+  saveDBLocal();
+}
+async function salvarInspecaoMangueira(insp){
+  const row={id:insp.id,mangueira_id:insp.mangueiraId,data:insp.data,inspetor:insp.inspetor||null,itens:insp.itens||{},observacoes:insp.observacoes||null};
+  try{ await supaPost('inspecoes_mangueiras',row); }catch(e){ console.error(e); }
+  saveDBLocal();
+}
+
 async function salvarInspecao(insp){
   const row = {
     id:insp.id, extintor_id:insp.extintorId, tipo:insp.tipo, data:insp.data,
@@ -723,7 +771,7 @@ async function importBackupFile(file, onDone){
       if(!parsed||!Array.isArray(parsed.locais)||!Array.isArray(parsed.extintores)||!Array.isArray(parsed.inspecoes)){
         onDone(false,'Arquivo não reconhecido como backup válido.'); return;
       }
-      DB = {locais:parsed.locais, extintores:parsed.extintores, inspecoes:parsed.inspecoes, seq:parsed.seq||0, org:parsed.org||'TIMBRO TRADING S.A.'};
+      DB = {locais:parsed.locais, extintores:parsed.extintores, mangueiras:parsed.mangueiras||[], inspecoes:parsed.inspecoes, inspecoesMangueiras:parsed.inspecoesMangueiras||[], seq:parsed.seq||0, mangueiraSeq:parsed.mangueiraSeq||0, org:parsed.org||'TIMBRO TRADING S.A.'};
       saveDBLocal();
       // Sobe tudo para o Supabase
       showSyncStatus('Enviando backup para o servidor…');
@@ -833,6 +881,13 @@ function parseHash(hash){
     if(ext) return {view:'inspecao-form', id: ext.id};
     return {view:'inspecao', _notFound: codigo};
   }
+  const mMatch=raw.match(/^m\/(.+)$/);
+  if(mMatch){
+    const codigo=decodeURIComponent(mMatch[1]).trim();
+    const m=(DB.mangueiras||[]).find(x=>x.codigo.toLowerCase()===codigo.toLowerCase());
+    if(m) return {view:'mangueira-inspecao',id:m.id};
+    return {view:'mangueiras',_notFound:codigo};
+  }
   return {view: raw};
 }
 
@@ -872,6 +927,7 @@ const NAVITEMS = [
   {v:'dashboard', label:'Painel', icon:ICONS.dash},
   {v:'locais', label:'Locais', icon:ICONS.local},
   {v:'extintores', label:'Extintores', icon:ICONS.ext},
+  {v:'mangueiras', label:'Mangueiras', icon:ICONS.ext},
   {v:'inspecao', label:'Inspeção', icon:ICONS.insp},
   {v:'qrcodes', label:'QR Codes', icon:ICONS.qr},
   {v:'historico', label:'Histórico', icon:ICONS.hist},
@@ -1022,12 +1078,13 @@ function renderLocais(){
     <div id="locais-list">
       ${locais.length===0 ? emptyState('Cadastre o primeiro local para começar.', ICONS.local) :
         locais.map(l=>{
-          const count = DB.extintores.filter(e=>e.localId===l.id).length;
+          const countExt = DB.extintores.filter(e=>e.localId===l.id).length;
+          const countMang = (DB.mangueiras||[]).filter(m=>m.localId===l.id).length;
           return `<div class="tag st-ok" style="align-items:flex-start;" data-local="${l.id}">
             <div class="tag-hole"></div>
             <div class="tag-main">
               <div class="tag-name">${l.nome}</div>
-              <div class="tag-meta"><span>${count} extintor${count!==1?'es':''}</span>${l.descricao?`<span>${l.descricao}</span>`:''}</div>
+              <div class="tag-meta"><span>${countExt} extintor${countExt!==1?'es':''}</span><span>${countMang} mangueira${countMang!==1?'s':''}</span>${l.descricao?`<span>${l.descricao}</span>`:''}</div>
             </div>
             <div class="tag-actions">
               <button class="btn btn-line btn-sm act-edit">${ICONS.edit}</button>
@@ -1043,7 +1100,9 @@ function renderLocais(){
     row.querySelector('.act-edit').onclick=()=>openLocalForm(DB.locais.find(l=>l.id===id));
     row.querySelector('.act-del').onclick=()=>{
       const count = DB.extintores.filter(e=>e.localId===id).length;
-      confirmModal('Excluir local', count>0? `Este local tem ${count} extintor(es) vinculado(s). Excluir mesmo assim? Os extintores ficarão sem local.` : 'Tem certeza que deseja excluir este local?', async ()=>{
+      const countMang = (DB.mangueiras||[]).filter(m=>m.localId===id).length;
+      const totalVinc = count + countMang;
+      confirmModal('Excluir local', totalVinc>0? `Este local tem ${count} extintor(es) e ${countMang} mangueira(s) vinculados. Excluir mesmo assim? Os equipamentos ficarão sem local.` : 'Tem certeza que deseja excluir este local?', async ()=>{
         DB.locais = DB.locais.filter(l=>l.id!==id);
         await excluirLocal(id);
         renderLocais(); toast('Local excluído.');
@@ -1074,6 +1133,85 @@ function openLocalForm(local){
     await salvarLocal(alvo);
     root.innerHTML=''; renderLocais(); toast('Local salvo.');
   };
+}
+
+/* ================= MANGUEIRAS ================= */
+function renderMangueiras(){
+  const mangs=[...(DB.mangueiras||[])].sort((a,b)=>a.codigo.localeCompare(b.codigo));
+  document.getElementById('content').innerHTML=`
+    <div class="page-head">
+      <div><div class="eyebrow">Cadastro</div><h1>Mangueiras</h1><div class="sub">${mangs.length} equipamento${mangs.length!==1?'s':''} cadastrado${mangs.length!==1?'s':''}</div></div>
+      <button class="btn btn-primary" id="btn-add-mang" ${DB.locais.length===0?'disabled title="Cadastre um local primeiro"':''}>${ICONS.plus}Nova mangueira</button>
+    </div>
+    ${DB.locais.length===0 ? `<div class="panel" style="margin-bottom:16px;color:var(--ink-soft);font-size:13.5px;">Cadastre um <b>local</b> antes de adicionar mangueiras.</div>`:''}
+    <div id="mang-list">
+      ${mangs.length===0 ? emptyState('Nenhuma mangueira cadastrada ainda.', ICONS.ext) : mangs.map(m=>{
+        const local=DB.locais.find(l=>l.id===m.localId);
+        return `<div class="tag st-ok" data-mang="${m.id}" style="cursor:pointer;align-items:flex-start;">
+          <div class="tag-hole"></div><div class="tag-main">
+            <div class="tag-code">${m.codigo} <span class="badge-type">${m.tipo}</span></div>
+            <div class="tag-name">${local?local.nome:'Sem local'}</div>
+            <div class="tag-meta"><span>${m.metragem} m</span><span>${m.pontoInstalacao||'Sem ponto informado'}</span></div>
+          </div>
+          <div class="tag-actions"><button class="btn btn-line btn-sm act-edit">${ICONS.edit}</button><button class="btn btn-danger btn-sm act-del">${ICONS.trash}</button></div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  document.getElementById('btn-add-mang').onclick=()=>openMangueiraForm();
+  document.querySelectorAll('[data-mang]').forEach(row=>{
+    const id=row.dataset.mang;
+    row.querySelector('.tag-main').onclick=()=>nav('mangueira-detalhe',{id});
+    row.querySelector('.act-edit').onclick=(e)=>{e.stopPropagation();openMangueiraForm(DB.mangueiras.find(m=>m.id===id));};
+    row.querySelector('.act-del').onclick=(e)=>{e.stopPropagation();
+      const m=DB.mangueiras.find(x=>x.id===id);
+      confirmModal('Excluir mangueira',`Excluir ${m.codigo} e todo o histórico de inspeções vinculado? Esta ação não pode ser desfeita.`,async()=>{
+        DB.mangueiras=DB.mangueiras.filter(x=>x.id!==id); DB.inspecoesMangueiras=(DB.inspecoesMangueiras||[]).filter(i=>i.mangueiraId!==id);
+        await excluirMangueira(id); nav('mangueiras'); toast('Mangueira excluída.');
+      });
+    };
+  });
+}
+function openMangueiraForm(existing){
+  const isEdit=!!existing, root=document.getElementById('modalroot');
+  root.innerHTML=`<div class="modal-overlay" id="ovl"><div class="modal" style="max-width:620px;">
+    <h3>${isEdit?'Editar mangueira':'Nova mangueira'}</h3>
+    <div class="field"><label>Local</label><select id="mf-local"><option value="">Selecione...</option>${DB.locais.map(l=>`<option value="${l.id}" ${existing&&existing.localId===l.id?'selected':''}>${l.nome}</option>`).join('')}</select></div>
+    <div class="grid2"><div class="field"><label>Tipo</label><select id="mf-tipo"><option value="1½" ${existing?.tipo==='1½'?'selected':''}>1½"</option><option value="2½" ${existing?.tipo==='2½'?'selected':''}>2½"</option></select></div>
+    <div class="field"><label>Metragem</label><select id="mf-metragem">${['15','20','25','30'].map(v=>`<option value="${v}" ${existing?.metragem===v?'selected':''}>${v} m</option>`).join('')}</select></div></div>
+    <div class="grid2"><div class="field"><label>Último teste hidrostático</label><input type="date" id="mf-teste" value="${existing?.dataUltimoTeste||''}"></div>
+    <div class="field"><label>Ponto de instalação <span style="font-weight:400;color:var(--ink-faint);">(máx. 140 caracteres)</span></label><input type="text" id="mf-ponto" maxlength="140" value="${existing?.pontoInstalacao||''}" placeholder="Ex.: Hidrante 12"></div></div>
+    <div class="form-actions">${isEdit?`<button class="btn btn-danger" id="mf-del" style="margin-right:auto;">${ICONS.trash}Excluir</button>`:''}<button class="btn btn-line" id="mf-cancel">Cancelar</button><button class="btn btn-primary" id="mf-save">${isEdit?'Salvar alterações':'Cadastrar e gerar QR Code'}</button></div>
+  </div></div>`;
+  root.querySelector('#mf-cancel').onclick=()=>root.innerHTML=''; root.querySelector('#ovl').onclick=e=>{if(e.target.id==='ovl')root.innerHTML='';};
+  if(isEdit) root.querySelector('#mf-del').onclick=()=>{ const m=existing; confirmModal('Excluir mangueira',`Excluir ${m.codigo} e todo o histórico de inspeções vinculado?`,async()=>{DB.mangueiras=DB.mangueiras.filter(x=>x.id!==m.id);DB.inspecoesMangueiras=(DB.inspecoesMangueiras||[]).filter(i=>i.mangueiraId!==m.id);await excluirMangueira(m.id);root.innerHTML='';nav('mangueiras');toast('Mangueira excluída.');}); };
+  root.querySelector('#mf-save').onclick=async()=>{
+    const localId=root.querySelector('#mf-local').value; if(!localId){toast('Selecione um local.');return;}
+    const data={localId,tipo:root.querySelector('#mf-tipo').value,metragem:root.querySelector('#mf-metragem').value,dataUltimoTeste:root.querySelector('#mf-teste').value,pontoInstalacao:root.querySelector('#mf-ponto').value.trim().slice(0,140)};
+    if(isEdit){Object.assign(existing,data);await atualizarMangueira(existing);root.innerHTML='';toast('Mangueira atualizada.');nav('mangueira-detalhe',{id:existing.id});}
+    else{const codigo=await nextCodigoMangueira();const novo={id:uid(),codigo,dataCadastro:todayISO(),...data};DB.mangueiras.push(novo);await salvarMangueira(novo);root.innerHTML='';toast('Mangueira cadastrada.');nav('mangueira-qr',{id:novo.id,fresh:true});}
+  };
+}
+function inspecoesDaMangueira(id){return (DB.inspecoesMangueiras||[]).filter(i=>i.mangueiraId===id).sort((a,b)=>b.data.localeCompare(a.data));}
+function renderMangueiraDetalhe(id){
+  const m=(DB.mangueiras||[]).find(x=>x.id===id); if(!m){nav('mangueiras');return;} const local=DB.locais.find(l=>l.id===m.localId), hist=inspecoesDaMangueira(id);
+  document.getElementById('content').innerHTML=`<button class="btn btn-ghost" id="mb" style="margin-bottom:10px;">${ICONS.back}Voltar</button>
+  <div class="page-head"><div><div class="eyebrow">${local?local.nome:'Sem local'}</div><h1 style="font-family:var(--font-mono);">${m.codigo}</h1><div class="sub">Mangueira ${m.tipo} · ${m.metragem} m</div></div><div style="display:flex;gap:8px;"><button class="btn btn-line" id="mqr">${ICONS.qr}QR Code</button><button class="btn btn-line" id="medit">${ICONS.edit}Editar</button><button class="btn btn-primary" id="minsp">${ICONS.insp}Inspecionar</button></div></div>
+  <div class="panel"><div class="grid2"><div><div class="eyebrow">Último teste hidrostático</div><div>${fmtDate(m.dataUltimoTeste)}</div></div><div><div class="eyebrow">Ponto de instalação</div><div>${m.pontoInstalacao||'—'}</div></div></div></div>
+  <div class="section-title">Histórico de inspeções <span class="count">${hist.length}</span></div><div class="panel">${hist.length?hist.map(h=>`<div class="history-row"><div class="history-date">${fmtDate(h.data)}</div><div class="history-body"><b>Inspeção</b>${h.inspetor?` <span class="pill">· ${h.inspetor}</span>`:''}<div class="history-items">${Object.entries(h.itens||{}).map(([k,v])=>`<span class="hi ${v==='ok'?'ok':'nok'}">${k}: ${v==='ok'?'OK':'Não conforme'}</span>`).join('')}</div>${h.observacoes?`<div style="font-size:12.5px;color:var(--ink-soft);margin-top:6px;">${h.observacoes}</div>`:''}</div></div>`).join(''):emptyState('Nenhuma inspeção registrada ainda.',ICONS.hist)}</div>`;
+  document.getElementById('mb').onclick=()=>nav('mangueiras');document.getElementById('mqr').onclick=()=>nav('mangueira-qr',{id});document.getElementById('medit').onclick=()=>openMangueiraForm(m);document.getElementById('minsp').onclick=()=>nav('mangueira-inspecao',{id});
+}
+function renderMangueiraQR(id,fresh){
+  const m=(DB.mangueiras||[]).find(x=>x.id===id);if(!m){nav('mangueiras');return;}const local=DB.locais.find(l=>l.id===m.localId);
+  document.getElementById('content').innerHTML=`<button class="btn btn-ghost no-print" id="mqrback" style="margin-bottom:10px;">${ICONS.back}Voltar</button>${fresh?`<div class="panel no-print" style="background:var(--primary-tint);border-color:var(--primary);margin-bottom:16px;font-size:13.5px;">Mangueira <b>${m.codigo}</b> cadastrada. Imprima o QR Code abaixo e cole no equipamento.</div>`:''}<div class="page-head no-print"><div><div class="eyebrow">${local?local.nome:''}</div><h1>QR Code — ${m.codigo}</h1></div><button class="btn btn-primary" id="mqrprint">${ICONS.print}Imprimir etiqueta</button></div><div class="printtag" style="width:220px;"><div class="qr-inner">${qrSvg(qrUrlParaMangueira(m.codigo),6)}</div><div class="pt-code">${m.codigo}</div><div class="pt-name">${local?local.nome:''}</div><div class="pt-org">${DB.org} · Mangueira de incêndio</div></div>`;
+  document.getElementById('mqrback').onclick=()=>nav('mangueira-detalhe',{id});document.getElementById('mqrprint').onclick=()=>window.print();
+}
+function qrUrlParaMangueira(codigo){return APP_BASE_URL+'#m/'+encodeURIComponent(codigo);}
+function renderMangueiraInspecao(id){
+  const m=(DB.mangueiras||[]).find(x=>x.id===id);if(!m){nav('mangueiras');return;}const local=DB.locais.find(l=>l.id===m.localId), ult=inspecoesDaMangueira(id)[0];
+  const itens=['Identificação e marcação','Revestimento / lona','Abrasão ou desgaste','Cortes, furos ou danos','Uniões / engates','Vedação','Condição geral'];
+  document.getElementById('content').innerHTML=`<button class="btn btn-ghost" id="miback" style="margin-bottom:10px;">${ICONS.back}Voltar</button><div class="page-head"><div><div class="eyebrow">Inspeção de mangueira</div><h1>${m.codigo}</h1><div class="sub">${local?local.nome:'Sem local'} · ${m.tipo} · ${m.metragem} m</div></div></div><div class="panel"><div class="grid2"><div><div class="eyebrow">Ponto de instalação</div><div>${m.pontoInstalacao||'—'}</div></div><div><div class="eyebrow">Último teste hidrostático</div><div>${fmtDate(m.dataUltimoTeste)}</div></div></div></div><div class="panel"><div class="field"><label>Data da inspeção</label><input type="date" id="mi-data" value="${todayISO()}"></div><div class="field"><label>Inspetor</label><input type="text" id="mi-insp" placeholder="Nome do responsável"></div><div style="font-size:12.5px;font-weight:600;color:var(--ink-soft);margin-bottom:8px;">Itens da inspeção</div>${itens.map((x,i)=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line-soft);"><span>${x}</span><select id="mi-i${i}" style="width:145px;"><option value="ok">Conforme</option><option value="nok">Não conforme</option></select></div>`).join('')}<div class="field" style="margin-top:12px;"><label>Observações</label><textarea id="mi-obs" rows="3" placeholder="Observações da inspeção"></textarea></div><div class="form-actions"><button class="btn btn-line" id="mi-cancel">Cancelar</button><button class="btn btn-primary" id="mi-save">Salvar inspeção</button></div></div>`;
+  document.getElementById('miback').onclick=()=>nav('mangueira-detalhe',{id});document.getElementById('mi-cancel').onclick=()=>nav('mangueira-detalhe',{id});
+  document.getElementById('mi-save').onclick=async()=>{const data=document.getElementById('mi-data').value;if(!data){toast('Informe a data da inspeção.');return;}const insp={id:uid(),mangueiraId:id,data,inspetor:document.getElementById('mi-insp').value.trim(),itens:Object.fromEntries(itens.map((x,i)=>[x,document.getElementById('mi-i'+i).value])),observacoes:document.getElementById('mi-obs').value.trim()};DB.inspecoesMangueiras.push(insp);await salvarInspecaoMangueira(insp);toast('Inspeção registrada.');nav('mangueira-detalhe',{id});};
 }
 
 /* ================= EXTINTORES ================= */
@@ -1321,7 +1459,7 @@ function renderInspecaoHub(){
   stopScanner();
   const exts = [...DB.extintores].sort((a,b)=>a.codigo.localeCompare(b.codigo));
   document.getElementById('content').innerHTML = `
-    <div class="page-head"><div><div class="eyebrow">Inspeção</div><h1>Iniciar inspeção</h1><div class="sub">Escaneie o QR Code do extintor ou selecione manualmente.</div></div></div>
+    <div class="page-head"><div><div class="eyebrow">Inspeção</div><h1>Iniciar inspeção</h1><div class="sub">Escaneie o QR Code de um extintor ou mangueira, ou selecione manualmente.</div></div></div>
 
     <div class="panel">
       <div style="display:flex;align-items:center;justify-content:space-between;">
@@ -1387,13 +1525,21 @@ function renderInspecaoHub(){
             nav('inspecao-form',{id:parsed.id});
             return;
           }
+          if(parsed.view==='mangueira-inspecao' && parsed.id){
+            stopScanner(); scanning=false;
+            toast('Mangueira identificada.');
+            nav('mangueira-inspecao',{id:parsed.id});
+            return;
+          }
           const m = u.hash.match(/^#(?:i|inspecao-form)\/(.+)$/);
           if(m) codigo = decodeURIComponent(m[1]);
         }catch(e){}
         const found = DB.extintores.find(e=>e.codigo.toLowerCase()===codigo.toLowerCase());
+        const foundMang = (DB.mangueiras||[]).find(m=>m.codigo.toLowerCase()===codigo.toLowerCase());
         stopScanner(); scanning=false;
         if(found){ toast('Extintor '+found.codigo+' identificado.'); nav('inspecao-form',{id:found.id}); }
-        else { toast('QR Code não corresponde a nenhum extintor cadastrado.'); }
+        else if(foundMang){ toast('Mangueira '+foundMang.codigo+' identificada.'); nav('mangueira-inspecao',{id:foundMang.id}); }
+        else { toast('QR Code não corresponde a nenhum equipamento cadastrado.'); }
       },
       ()=>{}
     ).then(()=>{ scanning=true; ev.target.innerHTML = ICONS.camera+'Desativar câmera'; })
@@ -1737,6 +1883,12 @@ function render(){
     case 'dashboard': renderDashboard(); break;
     case 'locais': renderLocais(); break;
     case 'extintores': renderExtintores(); break;
+    case 'mangueiras': renderMangueiras(); break;
+    case 'mangueira-detalhe': renderMangueiraDetalhe(ROUTE.id); break;
+    case 'mangueira-nova': openMangueiraForm(); break;
+    case 'mangueira-editar': openMangueiraForm(DB.mangueiras.find(m=>m.id===ROUTE.id)); break;
+    case 'mangueira-qr': renderMangueiraQR(ROUTE.id, ROUTE.fresh); break;
+    case 'mangueira-inspecao': renderMangueiraInspecao(ROUTE.id); break;
     case 'extintor-novo': renderExtintorForm(null); break;
     case 'extintor-editar': renderExtintorForm(DB.extintores.find(e=>e.id===ROUTE.id)); break;
     case 'extintor-detalhe': renderExtintorDetalhe(ROUTE.id); break;
