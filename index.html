@@ -252,6 +252,7 @@ nav.mainnav{display:flex;flex-direction:column;gap:2px;margin-top:6px;}
 <div id="modalroot"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script>
 /* ============================================================
    CONTROLE DE EXTINTORES — app local (localStorage)
@@ -792,14 +793,15 @@ function nav(view, params){ ROUTE = {view, ...params}; location.hash = view; ren
 // Converte o hash da URL em ROUTE, suportando o formato gerado pelo QR Code:
 // #inspecao-form/EXT-0001 → {view:'inspecao-form', id: id_do_extintor}
 function parseHash(hash){
-  const raw = hash.replace('#','') || 'dashboard';
-  // formato QR: inspecao-form/EXT-0001
-  const qrMatch = raw.match(/^inspecao-form\/(.+)$/);
+  const raw = (hash || '').replace(/^#/, '') || 'dashboard';
+  // formato novo do QR: #i/EXT-0001
+  let qrMatch = raw.match(/^i\/(.+)$/);
+  // compatibilidade com QRs antigos: #inspecao-form/EXT-0001
+  if(!qrMatch) qrMatch = raw.match(/^inspecao-form\/(.+)$/);
   if(qrMatch){
-    const codigo = qrMatch[1].trim();
+    const codigo = decodeURIComponent(qrMatch[1]).trim();
     const ext = DB.extintores.find(e=> e.codigo.toLowerCase()===codigo.toLowerCase());
     if(ext) return {view:'inspecao-form', id: ext.id};
-    // código não encontrado — vai para hub de inspeção com aviso
     return {view:'inspecao', _notFound: codigo};
   }
   return {view: raw};
@@ -1201,16 +1203,20 @@ function historyRow(h){
 
 /* ================= QR — gerar / imprimir ================= */
 function qrSvg(text, cellSize){
-  return QR.toSvg(text, cellSize||5, 3);
+  if(typeof qrcode !== 'function') throw new Error('Biblioteca de QR Code não carregada.');
+  const qr = qrcode(0, 'M');
+  qr.addData(text);
+  qr.make();
+  return qr.createSvgTag(cellSize||5, 3);
 }
 
 /* URL base do app — usada para gerar QR Codes com link direto.
-   Quando hospedado em https://, a câmera nativa do celular abre o
-   formulário de inspeção diretamente ao escanear. */
+   O formato curto reduz o tamanho do conteúdo do QR Code e permite
+   que a câmera nativa do celular abra diretamente o formulário. */
 const APP_BASE_URL = 'https://diegovieira-prog.github.io/extintores';
 
 function qrUrlParaExtintor(codigo){
-  return APP_BASE_URL + '#inspecao-form/' + codigo;
+  return APP_BASE_URL + '#i/' + encodeURIComponent(codigo);
 }
 function renderExtintorQR(id, fresh){
   const ext = DB.extintores.find(e=>e.id===id);
@@ -1331,7 +1337,20 @@ function renderInspecaoHub(){
       {facingMode:"environment"},
       {fps:10, qrbox:230},
       (decodedText)=>{
-        const codigo = decodedText.trim();
+        const texto = decodedText.trim();
+        let codigo = texto;
+        try{
+          const u = new URL(texto);
+          const parsed = parseHash(u.hash);
+          if(parsed.view==='inspecao-form' && parsed.id){
+            stopScanner(); scanning=false;
+            toast('Extintor identificado.');
+            nav('inspecao-form',{id:parsed.id});
+            return;
+          }
+          const m = u.hash.match(/^#(?:i|inspecao-form)\/(.+)$/);
+          if(m) codigo = decodeURIComponent(m[1]);
+        }catch(e){}
         const found = DB.extintores.find(e=>e.codigo.toLowerCase()===codigo.toLowerCase());
         stopScanner(); scanning=false;
         if(found){ toast('Extintor '+found.codigo+' identificado.'); nav('inspecao-form',{id:found.id}); }
@@ -1626,11 +1645,16 @@ function render(){
 (function init(){
   // Carrega cache local imediatamente (evita tela em branco)
   ROUTE = parseHash(location.hash);
-  if(ROUTE._notFound) toast('Extintor "'+ROUTE._notFound+'" não encontrado. Verifique o cadastro.');
   render();
-  // Sincroniza com Supabase em background e re-renderiza
+  // Sincroniza com Supabase. Isso também permite que um QR Code
+  // escaneado em outro aparelho funcione mesmo sem cache local.
   syncFromSupabase().then(ok=>{
-    if(ok) render();
+    if(ok){
+      const parsed = parseHash(location.hash);
+      ROUTE = parsed;
+      if(parsed._notFound) toast('Extintor "'+parsed._notFound+'" não encontrado. Verifique o cadastro.');
+      render();
+    }
   });
 })();
 </script>
