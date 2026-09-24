@@ -938,6 +938,7 @@ const NAVITEMS = [
   {v:'inspecao', label:'Inspeção', icon:ICONS.insp},
   {v:'qrcodes', label:'QR Codes', icon:ICONS.qr},
   {v:'historico', label:'Histórico', icon:ICONS.hist},
+  {v:'manutencao', label:'Manutenção', icon:ICONS.insp},
   {v:'relatorio', label:'Relatório', icon:ICONS.print},
 ];
 function pendenciasCount(){
@@ -1478,10 +1479,12 @@ function renderExtintorQR(id, fresh){
 
 function renderQRCodesPage(){
   const filtroLocal = ROUTE.localId || '';
-  const list = DB.extintores.filter(e=> !filtroLocal || e.localId===filtroLocal).sort((a,b)=>a.codigo.localeCompare(b.codigo));
+  const exts = DB.extintores.filter(e=> !filtroLocal || e.localId===filtroLocal).sort((a,b)=>a.codigo.localeCompare(b.codigo));
+  const mangs = (DB.mangueiras||[]).filter(m=> !filtroLocal || m.localId===filtroLocal).sort((a,b)=>a.codigo.localeCompare(b.codigo));
+  const total = exts.length + mangs.length;
   document.getElementById('content').innerHTML = `
     <div class="page-head no-print">
-      <div><div class="eyebrow">Impressão</div><h1>QR Codes</h1><div class="sub">Gere e imprima as etiquetas para colar em cada extintor.</div></div>
+      <div><div class="eyebrow">Impressão</div><h1>QR Codes</h1><div class="sub">Gere e imprima as etiquetas de todos os equipamentos cadastrados.</div></div>
       <div style="display:flex;gap:8px;align-items:center;">
         <select id="f-filtro-local">
           <option value="">Todos os locais</option>
@@ -1490,18 +1493,33 @@ function renderQRCodesPage(){
         <button class="btn btn-primary" id="btn-print-all">${ICONS.print}Imprimir</button>
       </div>
     </div>
-    ${list.length===0 ? emptyState('Nenhum extintor para gerar QR Code.', ICONS.qr) : `
-    <div class="printgrid">
-      ${list.map(e=>{
-        const local = DB.locais.find(l=>l.id===e.localId);
-        return `<div class="printtag">
-          ${qrSvg(qrUrlParaExtintor(e.codigo),4)}
-          <div class="pt-code">${e.codigo}</div>
-          <div class="pt-name">${local?local.nome:''}</div>
-          <div class="pt-org">${DB.org} · Combate a incêndio</div>
-        </div>`;
-      }).join('')}
-    </div>`}
+    <div class="panel no-print" style="margin-bottom:16px;font-size:13px;color:var(--ink-soft);">
+      ${total} equipamento${total!==1?'s':''} com QR Code · ${exts.length} extintor${exts.length!==1?'es':''} · ${mangs.length} mangueira${mangs.length!==1?'s':''}
+    </div>
+    ${total===0 ? emptyState('Nenhum equipamento para gerar QR Code.', ICONS.qr) : `
+      ${exts.length ? `<div class="section-title">Extintores <span class="count">${exts.length}</span></div><div class="printgrid">
+        ${exts.map(e=>{
+          const local = DB.locais.find(l=>l.id===e.localId);
+          return `<div class="printtag">
+            ${qrSvg(qrUrlParaExtintor(e.codigo),4)}
+            <div class="pt-code">${e.codigo}</div>
+            <div class="pt-name">${local?local.nome:''}</div>
+            <div class="pt-org">${DB.org} · Combate a incêndio</div>
+          </div>`;
+        }).join('')}
+      </div>` : ''}
+      ${mangs.length ? `<div class="section-title" style="margin-top:24px;">Mangueiras <span class="count">${mangs.length}</span></div><div class="printgrid">
+        ${mangs.map(m=>{
+          const local = DB.locais.find(l=>l.id===m.localId);
+          return `<div class="printtag">
+            ${qrSvg(qrUrlParaMangueira(m.codigo),4)}
+            <div class="pt-code">${m.codigo}</div>
+            <div class="pt-name">${local?local.nome:''}</div>
+            <div class="pt-org">${DB.org} · Mangueira de incêndio</div>
+          </div>`;
+        }).join('')}
+      </div>` : ''}
+    `}
   `;
   document.getElementById('f-filtro-local').onchange=(e)=>{ ROUTE.localId = e.target.value; renderQRCodesPage(); };
   document.getElementById('btn-print-all').onclick=()=>window.print();
@@ -1518,8 +1536,9 @@ function stopScanner(){
 function renderInspecaoHub(){
   stopScanner();
   const exts = [...DB.extintores].sort((a,b)=>a.codigo.localeCompare(b.codigo));
+  const mangs = [...(DB.mangueiras||[])].sort((a,b)=>a.codigo.localeCompare(b.codigo));
   document.getElementById('content').innerHTML = `
-    <div class="page-head"><div><div class="eyebrow">Inspeção</div><h1>Iniciar inspeção</h1><div class="sub">Escaneie o QR Code de um extintor ou mangueira, ou selecione manualmente.</div></div></div>
+    <div class="page-head"><div><div class="eyebrow">Inspeção</div><h1>Iniciar inspeção</h1><div class="sub">Escaneie o QR Code de um equipamento ou selecione manualmente.</div></div></div>
 
     <div class="panel">
       <div style="display:flex;align-items:center;justify-content:space-between;">
@@ -1527,7 +1546,7 @@ function renderInspecaoHub(){
         <button class="btn btn-line btn-sm" id="btn-toggle-scan">${ICONS.camera}Ativar câmera</button>
       </div>
       <div id="scan-area" style="margin-top:12px;"></div>
-      <div class="scanhelp">A leitura por câmera exige conexão segura (https) ou app instalado via navegador com permissão de câmera. Se não funcionar, use a busca manual abaixo.</div>
+      <div class="scanhelp">A leitura por câmera exige conexão segura (https) ou app instalado via navegador com permissão de câmera. Se não funcionar, use a seleção manual abaixo.</div>
     </div>
 
     <div class="panel">
@@ -1535,31 +1554,43 @@ function renderInspecaoHub(){
       <div class="field" style="margin-bottom:0;">
         <input type="text" id="f-busca" placeholder="Buscar por código ou local...">
       </div>
-      <div id="manual-list" style="margin-top:12px;max-height:360px;overflow:auto;"></div>
+      <div id="manual-list" style="margin-top:14px;max-height:500px;overflow:auto;"></div>
     </div>
   `;
   function renderManualList(filter){
     const f = (filter||'').toLowerCase();
-    const filtered = exts.filter(e=>{
+    const filteredExt = exts.filter(e=>{
       const local = DB.locais.find(l=>l.id===e.localId);
       return !f || e.codigo.toLowerCase().includes(f) || (local && local.nome.toLowerCase().includes(f));
     });
-    document.getElementById('manual-list').innerHTML = filtered.length===0? `<div style="color:var(--ink-faint);font-size:13px;padding:10px 0;">Nada encontrado.</div>` :
-      filtered.map(e=>{
+    const filteredMang = mangs.filter(m=>{
+      const local = DB.locais.find(l=>l.id===m.localId);
+      return !f || m.codigo.toLowerCase().includes(f) || (local && local.nome.toLowerCase().includes(f));
+    });
+    const extHtml = filteredExt.length ? `
+      <div class="section-title" style="margin-top:0;">Extintores <span class="count">${filteredExt.length}</span></div>
+      ${filteredExt.map(e=>{
         const local = DB.locais.find(l=>l.id===e.localId);
-        return `<div class="tag st-${statusGeral(e)}" data-ext="${e.id}" style="cursor:pointer;">
-          <div class="tag-hole"></div>
-          <div class="tag-main">
-            <div class="tag-code">${e.codigo}</div>
-            <div class="tag-meta"><span>${local?local.nome:'Sem local'}</span></div>
-          </div>
-          <div class="tag-status">${STATUS_LABEL[statusGeral(e)]}</div>
+        const st = statusGeral(e);
+        return `<div class="tag st-${st}" data-ext="${e.id}" style="cursor:pointer;">
+          <div class="tag-hole"></div><div class="tag-main"><div class="tag-code">${e.codigo}</div><div class="tag-meta"><span>${local?local.nome:'Sem local'}</span></div></div><div class="tag-status">${STATUS_LABEL[st]}</div>
         </div>`;
-      }).join('');
-    document.querySelectorAll('#manual-list [data-ext]').forEach(t=> t.onclick=()=> nav('inspecao-form',{id:t.dataset.ext}));
+      }).join('')}` : '';
+    const mangHtml = filteredMang.length ? `
+      <div class="section-title" style="margin-top:${extHtml?'24px':'0'};">Mangueiras <span class="count">${filteredMang.length}</span></div>
+      ${filteredMang.map(m=>{
+        const local = DB.locais.find(l=>l.id===m.localId);
+        const st = statusMangueira(m).status;
+        return `<div class="tag st-${st}" data-mang="${m.id}" style="cursor:pointer;">
+          <div class="tag-hole"></div><div class="tag-main"><div class="tag-code">${m.codigo}</div><div class="tag-meta"><span>${local?local.nome:'Sem local'}</span><span>${m.tipo} · ${m.metragem} m</span></div></div><div class="tag-status">${STATUS_LABEL[st]}</div>
+        </div>`;
+      }).join('')}` : '';
+    document.getElementById('manual-list').innerHTML = (extHtml||mangHtml) ? extHtml+mangHtml : `<div style="color:var(--ink-faint);font-size:13px;padding:10px 0;">Nada encontrado.</div>`;
+    document.querySelectorAll('#manual-list [data-ext]').forEach(t=>t.onclick=()=>nav('inspecao-form',{id:t.dataset.ext}));
+    document.querySelectorAll('#manual-list [data-mang]').forEach(t=>t.onclick=()=>nav('mangueira-inspecao',{id:t.dataset.mang}));
   }
   renderManualList('');
-  document.getElementById('f-busca').oninput=(e)=> renderManualList(e.target.value);
+  document.getElementById('f-busca').oninput=(e)=>renderManualList(e.target.value);
 
   let scanning = false;
   document.getElementById('btn-toggle-scan').onclick=(ev)=>{
@@ -1571,39 +1602,24 @@ function renderInspecaoHub(){
     }
     scannerInstance = new Html5Qrcode("reader");
     scannerInstance.start(
-      {facingMode:"environment"},
-      {fps:10, qrbox:230},
+      {facingMode:"environment"}, {fps:10, qrbox:230},
       (decodedText)=>{
-        const texto = decodedText.trim();
-        let codigo = texto;
+        const texto=decodedText.trim(); let codigo=texto;
         try{
-          const u = new URL(texto);
-          const parsed = parseHash(u.hash);
-          if(parsed.view==='inspecao-form' && parsed.id){
-            stopScanner(); scanning=false;
-            toast('Extintor identificado.');
-            nav('inspecao-form',{id:parsed.id});
-            return;
-          }
-          if(parsed.view==='mangueira-inspecao' && parsed.id){
-            stopScanner(); scanning=false;
-            toast('Mangueira identificada.');
-            nav('mangueira-inspecao',{id:parsed.id});
-            return;
-          }
-          const m = u.hash.match(/^#(?:i|inspecao-form)\/(.+)$/);
-          if(m) codigo = decodeURIComponent(m[1]);
+          const u=new URL(texto); const parsed=parseHash(u.hash);
+          if(parsed.view==='inspecao-form'&&parsed.id){stopScanner();scanning=false;toast('Extintor identificado.');nav('inspecao-form',{id:parsed.id});return;}
+          if(parsed.view==='mangueira-inspecao'&&parsed.id){stopScanner();scanning=false;toast('Mangueira identificada.');nav('mangueira-inspecao',{id:parsed.id});return;}
+          const m=u.hash.match(/^#(?:i|inspecao-form|m)\/(.+)$/); if(m) codigo=decodeURIComponent(m[1]);
         }catch(e){}
-        const found = DB.extintores.find(e=>e.codigo.toLowerCase()===codigo.toLowerCase());
-        const foundMang = (DB.mangueiras||[]).find(m=>m.codigo.toLowerCase()===codigo.toLowerCase());
-        stopScanner(); scanning=false;
-        if(found){ toast('Extintor '+found.codigo+' identificado.'); nav('inspecao-form',{id:found.id}); }
-        else if(foundMang){ toast('Mangueira '+foundMang.codigo+' identificada.'); nav('mangueira-inspecao',{id:foundMang.id}); }
-        else { toast('QR Code não corresponde a nenhum equipamento cadastrado.'); }
-      },
-      ()=>{}
-    ).then(()=>{ scanning=true; ev.target.innerHTML = ICONS.camera+'Desativar câmera'; })
-     .catch(()=>{ document.getElementById('scan-area').innerHTML = `<div style="color:var(--danger);font-size:13px;">Não foi possível acessar a câmera. Verifique as permissões do navegador ou use a busca manual.</div>`; });
+        const found=DB.extintores.find(e=>e.codigo.toLowerCase()===codigo.toLowerCase());
+        const foundMang=(DB.mangueiras||[]).find(m=>m.codigo.toLowerCase()===codigo.toLowerCase());
+        stopScanner();scanning=false;
+        if(found){toast('Extintor '+found.codigo+' identificado.');nav('inspecao-form',{id:found.id});}
+        else if(foundMang){toast('Mangueira '+foundMang.codigo+' identificada.');nav('mangueira-inspecao',{id:foundMang.id});}
+        else toast('QR Code não corresponde a nenhum equipamento cadastrado.');
+      },()=>{}
+    ).then(()=>{scanning=true;ev.target.innerHTML=ICONS.camera+'Desativar câmera';})
+     .catch(()=>{document.getElementById('scan-area').innerHTML=`<div style="color:var(--danger);font-size:13px;">Não foi possível acessar a câmera. Verifique as permissões do navegador ou use a busca manual.</div>`;});
   };
 }
 
@@ -1813,73 +1829,67 @@ function renderHistoricoGeral(){
   `;
 }
 
-/* ================= RELATÓRIO DE MANUTENÇÃO ANUAL ================= */
-function renderRelatorioManutencao(){
-  // Somente a manutenção anual determina a inclusão no relatório.
-  // O teste hidrostático é exibido apenas como informação.
-  const rows = DB.extintores.map(e=>{
-    const sA = statusAnual(e);
-    return {e, sA};
-  }).filter(x=>x.sA.status==='danger' || x.sA.status==='warn')
-    .sort((a,b)=>(a.sA.dias??-9999)-(b.sA.dias??-9999));
-
-  const vencidos = rows.filter(r=>r.sA.status==='danger').length;
-  const proximos = rows.filter(r=>r.sA.status==='warn').length;
-
-  document.getElementById('content').innerHTML = `
-    <div class="page-head report-head">
-      <div>
-        <div class="eyebrow">Relatório</div>
-        <h1>Manutenção anual</h1>
-        <div class="sub">Vencidos e com vencimento nos próximos 30 dias · gerado em ${fmtDate(todayISO())}</div>
-      </div>
-      <button class="btn btn-primary no-print" id="btn-export-pdf">${ICONS.print}Exportar PDF</button>
-    </div>
-
+/* ================= MANUTENÇÃO / RELATÓRIO ================= */
+function naoConformidadesAtuais(){
+  const out=[];
+  const exts=[...DB.extintores];
+  for(const e of exts){
+    const insp=inspecoesDoExtintor(e.id).find(i=>i.tipo==='mensal'||i.tipo==='anual');
+    if(!insp) continue;
+    const itens=Object.entries(insp.itens||{}).filter(([,v])=>v==='nok');
+    if(itens.length) out.push({tipoEquip:'Extintor',codigo:e.codigo,localId:e.localId,ref:e.id,data:insp.data,motivos:itens.map(([k])=>getItemLabel(k,e.tipo)),origem:'Necessidade de conserto'});
+  }
+  for(const m of (DB.mangueiras||[])){
+    const insp=inspecoesDaMangueira(m.id)[0];
+    if(!insp) continue;
+    const itens=Object.entries(insp.itens||{}).filter(([,v])=>v==='nok');
+    if(itens.length) out.push({tipoEquip:'Mangueira',codigo:m.codigo,localId:m.localId,ref:m.id,data:insp.data,motivos:itens.map(([k])=>k),origem:'Necessidade de conserto'});
+  }
+  return out;
+}
+function renderManutencao(){
+  const issues=[];
+  for(const e of DB.extintores){
+    const s=statusAnual(e);
+    if(s.status==='danger'||s.status==='warn') issues.push({tipo:'Extintor',codigo:e.codigo,localId:e.localId,ref:e.id,motivo:s.status==='danger'?'Manutenção anual vencida':`Manutenção anual vence em ${s.dias} dia${s.dias===1?'':'s'}`,data:e.dataUltimaRecargaAnual||e.dataCadastro,status:s.status});
+  }
+  for(const m of (DB.mangueiras||[])){
+    const s=statusMangueira(m);
+    if(s.status==='danger'||s.status==='warn') issues.push({tipo:'Mangueira',codigo:m.codigo,localId:m.localId,ref:m.id,motivo:!m.dataUltimoTeste?'Data do teste/manutenção não informada':s.status==='danger'?'Manutenção anual vencida':`Manutenção anual vence em ${s.dias} dia${s.dias===1?'':'s'}`,data:m.dataUltimoTeste,status:s.status});
+  }
+  const consertos=naoConformidadesAtuais();
+  const total=issues.length+consertos.length;
+  document.getElementById('content').innerHTML=`
+    <div class="page-head"><div><div class="eyebrow">Gestão</div><h1>Manutenção</h1><div class="sub">Pendências de manutenção e necessidades de conserto identificadas nas inspeções.</div></div><button class="btn btn-primary no-print" id="btn-maint-print">${ICONS.print}Exportar PDF</button></div>
     <div class="report-summary">
-      <div class="box"><div class="num">${rows.length}</div><div class="lbl">Equipamentos no relatório</div></div>
-      <div class="box"><div class="num">${vencidos}</div><div class="lbl">Manutenção anual vencida</div></div>
-      <div class="box"><div class="num">${proximos}</div><div class="lbl">Vencendo em até 30 dias</div></div>
+      <div class="box"><div class="num">${total}</div><div class="lbl">Pendências</div></div>
+      <div class="box"><div class="num">${issues.length}</div><div class="lbl">Por vencimento</div></div>
+      <div class="box"><div class="num">${consertos.length}</div><div class="lbl">Necessidade de conserto</div></div>
     </div>
-
+    <div class="section-title">Manutenção por vencimento <span class="count">${issues.length}</span></div>
     <div class="panel">
-      ${rows.length===0 ? emptyState('Nenhum extintor com manutenção anual vencida ou vencendo nos próximos 30 dias.', ICONS.insp) : `
-        <table class="report-table">
-          <thead>
-            <tr>
-              <th>Local</th>
-              <th>Ponto de instalação</th>
-              <th>Tipo</th>
-              <th>Capacidade</th>
-              <th>Manutenção Anual</th>
-              <th>Teste Hidrostático</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${rows.map(r=>{
-              const e=r.e, s=r.sA;
-              const local=DB.locais.find(l=>l.id===e.localId);
-              const situacao = s.status==='danger'
-                ? `<span class="report-status danger">VENCIDA</span>`
-                : `<span class="report-status warn">VENCE EM ${s.dias} DIA${s.dias===1?'':'S'}</span>`;
-              return `<tr>
-                <td>${local?local.nome:'Sem local'}</td>
-                <td>${e.pontoInstalacao||'—'}</td>
-                <td>${TIPOS[e.tipo]?.label||e.tipo||'—'}</td>
-                <td>${e.capacidade||'—'}</td>
-                <td>${fmtDate(e.dataUltimaRecargaAnual||e.dataCadastro)}${situacao}</td>
-                <td>${fmtDate(e.dataUltimoHidrostatico)}</td>
-              </tr>`;
-            }).join('')}
-          </tbody>
-        </table>`}
+      ${issues.length===0?emptyState('Nenhuma necessidade de manutenção por vencimento no momento.',ICONS.insp):`<table class="report-table"><thead><tr><th>Equipamento</th><th>Local</th><th>Ponto de instalação</th><th>Motivo</th><th>Data base</th></tr></thead><tbody>${issues.sort((a,b)=>a.codigo.localeCompare(b.codigo)).map(r=>{const local=DB.locais.find(l=>l.id===r.localId);const obj=r.tipo==='Extintor'?DB.extintores.find(e=>e.id===r.ref):DB.mangueiras.find(m=>m.id===r.ref);return `<tr><td><b>${r.codigo}</b><br><span style="font-size:11px;color:var(--ink-faint);">${r.tipo}</span></td><td>${local?local.nome:'Sem local'}</td><td>${obj?.pontoInstalacao||'—'}</td><td><span class="report-status ${r.status==='danger'?'danger':'warn'}">${r.motivo}</span></td><td>${fmtDate(r.data)}</td></tr>`;}).join('')}</tbody></table>`}
     </div>
-
-    <div style="font-size:11px;color:var(--ink-faint);margin-top:10px;line-height:1.5;">
-      <b>Critério do relatório:</b> somente a data da manutenção anual é utilizada para determinar vencimento ou proximidade do vencimento. A data do teste hidrostático é apresentada exclusivamente como informação.
+    <div class="section-title" style="margin-top:24px;">Necessidade de conserto — inspeções <span class="count">${consertos.length}</span></div>
+    <div class="panel">
+      ${consertos.length===0?emptyState('Nenhuma não conformidade registrada na última inspeção de cada equipamento.',ICONS.insp):`<table class="report-table"><thead><tr><th>Equipamento</th><th>Local</th><th>Motivo</th><th>Inspeção</th></tr></thead><tbody>${consertos.sort((a,b)=>a.codigo.localeCompare(b.codigo)).map(r=>{const local=DB.locais.find(l=>l.id===r.localId);return `<tr><td><b>${r.codigo}</b><br><span style="font-size:11px;color:var(--ink-faint);">${r.tipoEquip}</span></td><td>${local?local.nome:'Sem local'}</td><td><span class="report-status danger">${r.origem}</span><div style="font-size:12px;margin-top:5px;">${r.motivos.join(' · ')}</div></td><td>${fmtDate(r.data)}</td></tr>`;}).join('')}</tbody></table>`}
     </div>
+    <div style="font-size:11px;color:var(--ink-faint);margin-top:10px;line-height:1.5;"><b>Critério:</b> vencimentos são calculados pelas regras atuais de cada equipamento. As necessidades de conserto são extraídas da inspeção mais recente registrada e desaparecem desta lista quando uma nova inspeção registrar todos os itens como conformes.</div>
   `;
+  document.getElementById('btn-maint-print').onclick=()=>window.print();
+}
 
+function renderRelatorioManutencao(){
+  const rowsExt = DB.extintores.map(e=>({tipo:'Extintor',codigo:e.codigo,localId:e.localId,ponto:e.pontoInstalacao||'',tipoInfo:TIPOS[e.tipo]?.label||e.tipo,capacidade:e.capacidade||'—',data:e.dataUltimaRecargaAnual||e.dataCadastro,status:statusAnual(e)})).filter(r=>r.status.status==='danger'||r.status.status==='warn');
+  const rowsMang = (DB.mangueiras||[]).map(m=>({tipo:'Mangueira',codigo:m.codigo,localId:m.localId,ponto:m.pontoInstalacao||'',tipoInfo:m.tipo,capacidade:m.metragem+' m',data:m.dataUltimoTeste,status:statusMangueira(m)})).filter(r=>r.status.status==='danger'||r.status.status==='warn');
+  const rows=[...rowsExt,...rowsMang].sort((a,b)=>(a.status.dias??-9999)-(b.status.dias??-9999));
+  const vencidos=rows.filter(r=>r.status.status==='danger').length, proximos=rows.filter(r=>r.status.status==='warn').length;
+  document.getElementById('content').innerHTML=`
+    <div class="page-head report-head"><div><div class="eyebrow">Relatório</div><h1>Manutenção anual</h1><div class="sub">Extintores e mangueiras vencidos ou com vencimento nos próximos 30 dias · ${fmtDate(todayISO())}</div></div><button class="btn btn-primary no-print" id="btn-export-pdf">${ICONS.print}Exportar PDF</button></div>
+    <div class="report-summary"><div class="box"><div class="num">${rows.length}</div><div class="lbl">Equipamentos no relatório</div></div><div class="box"><div class="num">${vencidos}</div><div class="lbl">Manutenção vencida</div></div><div class="box"><div class="num">${proximos}</div><div class="lbl">Vencendo em até 30 dias</div></div></div>
+    <div class="panel">${rows.length===0?emptyState('Nenhum extintor ou mangueira com manutenção anual vencida ou vencendo nos próximos 30 dias.',ICONS.insp):`<table class="report-table"><thead><tr><th>Equipamento</th><th>Local</th><th>Ponto de instalação</th><th>Tipo / capacidade</th><th>Manutenção / teste base</th><th>Situação</th></tr></thead><tbody>${rows.map(r=>{const local=DB.locais.find(l=>l.id===r.localId);const s=r.status;const situ=s.status==='danger'?`<span class="report-status danger">VENCIDA</span>`:`<span class="report-status warn">VENCE EM ${s.dias} DIA${s.dias===1?'':'S'}</span>`;return `<tr><td><b>${r.codigo}</b><br><span style="font-size:11px;color:var(--ink-faint);">${r.tipo}</span></td><td>${local?local.nome:'Sem local'}</td><td>${r.ponto||'—'}</td><td>${r.tipoInfo}<br>${r.capacidade}</td><td>${fmtDate(r.data)}</td><td>${situ}</td></tr>`;}).join('')}</tbody></table>`}</div>
+    <div style="font-size:11px;color:var(--ink-faint);margin-top:10px;line-height:1.5;"><b>Critério:</b> manutenção anual de extintores e mangueiras. Para mangueiras, a data base é o último teste hidrostático cadastrado.</div>
+  `;
   document.getElementById('btn-export-pdf').onclick=()=>window.print();
 }
 
@@ -1957,6 +1967,7 @@ function render(){
     case 'inspecao': renderInspecaoHub(); break;
     case 'inspecao-form': renderInspecaoForm(ROUTE.id); break;
     case 'historico': renderHistoricoGeral(); break;
+    case 'manutencao': renderManutencao(); break;
     case 'relatorio': renderRelatorioManutencao(); break;
     case 'relatorio-status': renderRelatorioStatus(ROUTE.status); break;
     default: renderDashboard();
