@@ -1012,36 +1012,64 @@ function renderDashboard(){
                     .filter(x=>x.status.status!=='ok')
                     .sort((a,b)=>(a.status.dias??-9999)-(b.status.dias??-9999));
 
+  const totalEquip = n + nMang;
+  const totalOk = okN + mangOkN;
+  const totalWarn = warnN + mangWarnN;
+  const totalDanger = dangerN + mangDangerN;
+
   document.getElementById('content').innerHTML = `
     <div class="page-head">
-      <div><div class="eyebrow">Visão geral</div><h1>Painel de extintores</h1></div>
+      <div><div class="eyebrow">Visão geral</div><h1>Painel de equipamentos</h1></div>
       <button class="btn btn-primary" id="btn-nova-insp">${ICONS.insp}Nova inspeção</button>
     </div>
 
-    <div class="stat-row">
+    <div class="section-title">Equipamentos cadastrados</div>
+    <div class="stat-row" style="grid-template-columns:repeat(2,1fr);">
       <div class="stat"><div class="n">${n}</div><div class="l">Extintores cadastrados</div></div>
       <div class="stat"><div class="n">${nMang}</div><div class="l">Mangueiras cadastradas</div></div>
-      <div class="stat acc-ok"><div class="n">${okN}</div><div class="l">Extintores em dia</div></div>
-      <div class="stat acc-warn stat-click" id="stat-warn">
-        <div class="n">${warnN}</div><div class="l">Atenção (vencendo)</div>
-      </div>
-      <div class="stat acc-danger stat-click" id="stat-danger">
-        <div class="n">${dangerN}</div><div class="l">Vencidos</div>
+    </div>
+
+    <div class="section-title" style="margin-top:8px;">Situação das manutenções</div>
+    <div class="stat-row" style="grid-template-columns:repeat(3,1fr);">
+      <div class="stat acc-ok"><div class="n">${totalOk}</div><div class="l">Em dia</div></div>
+      <div class="stat acc-warn"><div class="n">${totalWarn}</div><div class="l">Atenção (vencendo)</div></div>
+      <div class="stat acc-danger"><div class="n">${totalDanger}</div><div class="l">Vencidos</div></div>
+    </div>
+
+    <div class="panel">
+      <div style="font-size:12.5px;font-weight:600;color:var(--ink-soft);margin-bottom:12px;">Resumo por equipamento</div>
+      <div class="grid2">
+        <div>
+          <div class="eyebrow">Extintores</div>
+          <div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:7px;">
+            <span><i style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--ok);margin-right:5px;"></i>${okN} em dia</span>
+            <span><i style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--warn);margin-right:5px;"></i>${warnN} atenção</span>
+            <span><i style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--danger);margin-right:5px;"></i>${dangerN} vencidos</span>
+          </div>
+        </div>
+        <div>
+          <div class="eyebrow">Mangueiras</div>
+          <div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:7px;">
+            <span><i style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--ok);margin-right:5px;"></i>${mangOkN} em dia</span>
+            <span><i style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--warn);margin-right:5px;"></i>${mangWarnN} atenção</span>
+            <span><i style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--danger);margin-right:5px;"></i>${mangDangerN} vencidos</span>
+          </div>
+        </div>
       </div>
     </div>
 
-    ${n>0 ? `
+    ${totalEquip>0 ? `
     <div class="panel">
-      <div style="font-size:12.5px;font-weight:600;color:var(--ink-soft);">Situação da frota</div>
+      <div style="font-size:12.5px;font-weight:600;color:var(--ink-soft);">Situação geral</div>
       <div class="barmeter">
-        ${okN>0?`<span style="width:${okN/n*100}%;background:var(--ok);"></span>`:''}
-        ${warnN>0?`<span style="width:${warnN/n*100}%;background:var(--warn);"></span>`:''}
-        ${dangerN>0?`<span style="width:${dangerN/n*100}%;background:var(--danger);"></span>`:''}
+        ${totalOk>0?`<span style="width:${totalOk/totalEquip*100}%;background:var(--ok);"></span>`:''}
+        ${totalWarn>0?`<span style="width:${totalWarn/totalEquip*100}%;background:var(--warn);"></span>`:''}
+        ${totalDanger>0?`<span style="width:${totalDanger/totalEquip*100}%;background:var(--danger);"></span>`:''}
       </div>
       <div class="legend">
-        <span><i style="background:var(--ok)"></i>Em dia (${okN})</span>
-        <span><i style="background:var(--warn)"></i>Atenção (${warnN})</span>
-        <span><i style="background:var(--danger)"></i>Vencido (${dangerN})</span>
+        <span><i style="background:var(--ok)"></i>Em dia (${totalOk})</span>
+        <span><i style="background:var(--warn)"></i>Atenção (${totalWarn})</span>
+        <span><i style="background:var(--danger)"></i>Vencidos (${totalDanger})</span>
       </div>
     </div>` : ''}
 
@@ -1071,10 +1099,6 @@ function renderDashboard(){
   `;
   document.getElementById('btn-nova-insp').onclick=()=>nav('inspecao');
   document.querySelectorAll('[data-mang-dash]').forEach(el=>el.onclick=()=>nav('mangueira-detalhe',{id:el.dataset.mangDash}));
-  const statWarn = document.getElementById('stat-warn');
-  const statDanger = document.getElementById('stat-danger');
-  if(statWarn) statWarn.onclick=()=>nav('relatorio-status',{status:'warn'});
-  if(statDanger) statDanger.onclick=()=>nav('relatorio-status',{status:'danger'});
   bindTagClicks();
 }
 function emptyState(msg, icon){
