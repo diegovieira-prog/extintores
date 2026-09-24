@@ -252,7 +252,6 @@ nav.mainnav{display:flex;flex-direction:column;gap:2px;margin-top:6px;}
 <div id="modalroot"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script>
 /* ============================================================
    CONTROLE DE EXTINTORES — app local (localStorage)
@@ -363,12 +362,13 @@ const QR = (function(){
   }
 
   const VERSIONS = {
-    1:{size:21, dataCodewords:16, ecCodewords:10, byteCapacity:14, alignment:null},
-    2:{size:25, dataCodewords:28, ecCodewords:16, byteCapacity:26, alignment:[18]},
-    3:{size:29, dataCodewords:44, ecCodewords:26, byteCapacity:42, alignment:[22]},
+    1:{size:21, dataCodewords:19, ecCodewords:7,  byteCapacity:17, alignment:null},
+    2:{size:25, dataCodewords:34, ecCodewords:10, byteCapacity:32, alignment:[18]},
+    3:{size:29, dataCodewords:55, ecCodewords:15, byteCapacity:53, alignment:[22]},
+    4:{size:33, dataCodewords:80, ecCodewords:20, byteCapacity:78, alignment:[26]},
   };
   function pickVersion(byteLen){
-    for(const v of [1,2,3]) if(byteLen <= VERSIONS[v].byteCapacity) return v;
+    for(const v of [1,2,3,4]) if(byteLen <= VERSIONS[v].byteCapacity) return v;
     return null;
   }
 
@@ -477,7 +477,15 @@ const QR = (function(){
   }
   function placeFormatInfo(mtx){
     const {size, modules} = mtx;
-    const fmt=[1,0,1,0,1,0,0,0,0,0,1,0,0,1,0]; // EC=M, mask=0 (pré-calculado com BCH)
+    // Nível L + máscara 0. O valor é calculado pelo BCH para evitar
+    // depender de uma tabela externa.
+    const data = (1 << 3) | 0; // L=01, mask=000
+    let bits = data << 10;
+    let rem = bits;
+    for(let i=14;i>=10;i--) if((rem>>i)&1) rem ^= 0x537 << (i-10);
+    const format = ((bits | rem) ^ 0x5412);
+    const fmt = [];
+    for(let i=14;i>=0;i--) fmt.push((format>>i)&1);
     const aCoords=[[8,0],[8,1],[8,2],[8,3],[8,4],[8,5],[8,7],[8,8],[7,8],[5,8],[4,8],[3,8],[2,8],[1,8],[0,8]];
     for(let i=0;i<15;i++){ const [r,c]=aCoords[i]; modules[r][c]=fmt[i]; }
     const bCoords=[[size-1,8],[size-2,8],[size-3,8],[size-4,8],[size-5,8],[size-6,8],[size-7,8],[8,size-8],[8,size-7],[8,size-6],[8,size-5],[8,size-4],[8,size-3],[8,size-2],[8,size-1]];
@@ -1203,11 +1211,11 @@ function historyRow(h){
 
 /* ================= QR — gerar / imprimir ================= */
 function qrSvg(text, cellSize){
-  if(typeof qrcode !== 'function') throw new Error('Biblioteca de QR Code não carregada.');
-  const qr = qrcode(0, 'M');
-  qr.addData(text);
-  qr.make();
-  return qr.createSvgTag(cellSize||5, 3);
+  const svg = QR.toSvg(String(text), cellSize||5, 4);
+  if(!svg || svg.includes('viewBox="0 0 10 10"')){
+    throw new Error('Não foi possível gerar o QR Code para este conteúdo.');
+  }
+  return svg;
 }
 
 /* URL base do app — usada para gerar QR Codes com link direto.
