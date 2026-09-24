@@ -573,6 +573,7 @@ function rowToLocal(row){
     fabricante:row.fabricante||'', dataFabricacao:row.data_fabricacao||'',
     dataUltimaRecargaAnual:row.data_ultima_recarga_anual||'',
     dataUltimoHidrostatico:row.data_ultimo_hidrostatico||'',
+    pontoInstalacao:row.ponto_instalacao||'',
     dataCadastro:row.data_cadastro||'',
   };
 }
@@ -651,6 +652,7 @@ async function salvarExtintor(ext){
     fabricante:ext.fabricante||null, data_fabricacao:ext.dataFabricacao||null,
     data_ultima_recarga_anual:ext.dataUltimaRecargaAnual||null,
     data_ultimo_hidrostatico:ext.dataUltimoHidrostatico||null,
+    ponto_instalacao:ext.pontoInstalacao||null,
     data_cadastro:ext.dataCadastro||todayISO(),
   };
   try{
@@ -667,6 +669,7 @@ async function atualizarExtintor(ext){
     fabricante:ext.fabricante||null, data_fabricacao:ext.dataFabricacao||null,
     data_ultima_recarga_anual:ext.dataUltimaRecargaAnual||null,
     data_ultimo_hidrostatico:ext.dataUltimoHidrostatico||null,
+    ponto_instalacao:ext.pontoInstalacao||null,
   };
   try{ await supaPatch('extintores', row, 'id=eq.'+ext.id); }catch(e){ console.error(e); }
   saveDBLocal();
@@ -1088,6 +1091,10 @@ function renderExtintorForm(existing){
           <select id="f-tipo">${Object.entries(TIPOS).map(([k,v])=>`<option value="${k}" ${existing&&existing.tipo===k?'selected':''}>${v.label}</option>`).join('')}</select>
         </div>
       </div>
+      <div class="field">
+        <label>Ponto de instalação <span style="font-weight:400;color:var(--ink-faint);">(máx. 140 caracteres)</span></label>
+        <input type="text" id="f-ponto" maxlength="140" value="${existing?existing.pontoInstalacao||'':''}" placeholder="Ex.: Coluna 12, próximo à entrada do setor">
+      </div>
       <div class="grid3">
         <div class="field"><label>Capacidade</label><input type="text" id="f-cap" value="${existing?existing.capacidade||'':''}" placeholder="Ex.: 6 kg / 10 L"></div>
         <div class="field"><label>Nº de série / patrimônio</label><input type="text" id="f-serie" value="${existing?existing.numeroSerie||'':''}" placeholder="Opcional"></div>
@@ -1120,6 +1127,7 @@ function renderExtintorForm(existing){
     if(!localId){ toast('Selecione um local.'); return; }
     const data = {
       localId,
+      pontoInstalacao: document.getElementById('f-ponto').value.trim().slice(0,140),
       tipo: document.getElementById('f-tipo').value,
       capacidade: document.getElementById('f-cap').value.trim(),
       numeroSerie: document.getElementById('f-serie').value.trim(),
@@ -1175,6 +1183,10 @@ function renderExtintorDetalhe(id){
         <div><div class="eyebrow">Fabricante</div><div>${ext.fabricante||'—'}</div></div>
         <div><div class="eyebrow">Nº série/patrimônio</div><div>${ext.numeroSerie||'—'}</div></div>
         <div><div class="eyebrow">Fabricação</div><div>${fmtDate(ext.dataFabricacao)}</div></div>
+      </div>
+      <div style="border-top:1px solid var(--line-soft);margin-top:12px;padding-top:10px;">
+        <div class="eyebrow">Ponto de instalação</div>
+        <div>${ext.pontoInstalacao||'—'}</div>
       </div>
     </div>
 
