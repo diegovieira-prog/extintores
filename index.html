@@ -861,6 +861,13 @@ function statusGeral(ext){
   if(s.some(x=>x.status==='warn')) return 'warn';
   return 'ok';
 }
+// Mangueiras: a validade anual é calculada a partir do último teste hidrostático.
+// Se não houver data cadastrada, a situação fica pendente para preenchimento.
+function statusMangueira(m){
+  if(!m.dataUltimoTeste) return {status:'danger',dias:null,proxima:null,label:'Teste/Manutenção não informado'};
+  const proxima = addYears(m.dataUltimoTeste,1);
+  return {...prazoStatus(proxima,30),tipo:'manutencao',label:'Manutenção anual'};
+}
 const STATUS_LABEL = {ok:'Em dia', warn:'Atenção', danger:'Vencido'};
 
 /* ---------- ROUTER ---------- */
@@ -988,14 +995,22 @@ function renderSidebar(){
 /* ================= DASHBOARD ================= */
 function renderDashboard(){
   const exts = DB.extintores;
+  const mangs = DB.mangueiras || [];
   const n = exts.length;
+  const nMang = mangs.length;
   const okN = exts.filter(e=>statusGeral(e)==='ok').length;
   const warnN = exts.filter(e=>statusGeral(e)==='warn').length;
   const dangerN = exts.filter(e=>statusGeral(e)==='danger').length;
+  const mangOkN = mangs.filter(m=>statusMangueira(m).status==='ok').length;
+  const mangWarnN = mangs.filter(m=>statusMangueira(m).status==='warn').length;
+  const mangDangerN = mangs.filter(m=>statusMangueira(m).status==='danger').length;
 
   const pend = exts.map(e=>({e, items:[statusMensal(e),statusAnual(e),statusHidro(e)].filter(s=>s.status!=='ok').sort((a,b)=>(a.dias??-9999)-(b.dias??-9999))}))
                     .filter(x=>x.items.length>0)
                     .sort((a,b)=> (a.items[0].dias??-9999)-(b.items[0].dias??-9999));
+  const pendMang = mangs.map(m=>({m, status:statusMangueira(m)}))
+                    .filter(x=>x.status.status!=='ok')
+                    .sort((a,b)=>(a.status.dias??-9999)-(b.status.dias??-9999));
 
   document.getElementById('content').innerHTML = `
     <div class="page-head">
@@ -1005,7 +1020,8 @@ function renderDashboard(){
 
     <div class="stat-row">
       <div class="stat"><div class="n">${n}</div><div class="l">Extintores cadastrados</div></div>
-      <div class="stat acc-ok"><div class="n">${okN}</div><div class="l">Em dia</div></div>
+      <div class="stat"><div class="n">${nMang}</div><div class="l">Mangueiras cadastradas</div></div>
+      <div class="stat acc-ok"><div class="n">${okN}</div><div class="l">Extintores em dia</div></div>
       <div class="stat acc-warn stat-click" id="stat-warn">
         <div class="n">${warnN}</div><div class="l">Atenção (vencendo)</div>
       </div>
@@ -1029,15 +1045,32 @@ function renderDashboard(){
       </div>
     </div>` : ''}
 
-    <div class="section-title">Pendências <span class="count">${pend.length}</span></div>
-    ${pend.length===0 ? emptyState('Nenhuma pendência no momento.', ICONS.insp) :
+    <div class="section-title">Pendências de extintores <span class="count">${pend.length}</span></div>
+    ${pend.length===0 ? emptyState('Nenhuma pendência de extintores no momento.', ICONS.insp) :
       pend.slice(0,25).map(x=>{
         const e=x.e; const top=x.items[0];
         return tagRow(e, top);
       }).join('')
     }
+
+    <div class="section-title" style="margin-top:24px;">Pendências de mangueiras <span class="count">${pendMang.length}</span></div>
+    ${pendMang.length===0 ? emptyState('Nenhuma pendência de mangueiras no momento.', ICONS.insp) :
+      pendMang.slice(0,25).map(x=>{
+        const m=x.m; const st=x.status;
+        const local=DB.locais.find(l=>l.id===m.localId);
+        const diasTxt=st.dias==null?'':(st.dias<0?`há ${Math.abs(st.dias)} dia(s)`:`em ${st.dias} dia(s)`);
+        return `<div class="tag st-${st.status}" data-mang-dash="${m.id}" style="cursor:pointer;">
+          <div class="tag-hole"></div><div class="tag-main">
+            <div class="tag-code">${m.codigo} <span class="badge-type">${m.tipo} · ${m.metragem} m</span></div>
+            <div class="tag-name">${local?local.nome:'Sem local'}</div>
+            <div class="tag-meta"><span>${st.label}</span><span>${st.proxima?fmtDate(st.proxima):'Data não informada'} ${diasTxt?('· '+diasTxt):''}</span></div>
+          </div><div class="tag-status">${STATUS_LABEL[st.status]}</div>
+        </div>`;
+      }).join('')
+    }
   `;
   document.getElementById('btn-nova-insp').onclick=()=>nav('inspecao');
+  document.querySelectorAll('[data-mang-dash]').forEach(el=>el.onclick=()=>nav('mangueira-detalhe',{id:el.dataset.mangDash}));
   const statWarn = document.getElementById('stat-warn');
   const statDanger = document.getElementById('stat-danger');
   if(statWarn) statWarn.onclick=()=>nav('relatorio-status',{status:'warn'});
@@ -1147,11 +1180,14 @@ function renderMangueiras(){
     <div id="mang-list">
       ${mangs.length===0 ? emptyState('Nenhuma mangueira cadastrada ainda.', ICONS.ext) : mangs.map(m=>{
         const local=DB.locais.find(l=>l.id===m.localId);
-        return `<div class="tag st-ok" data-mang="${m.id}" style="cursor:pointer;align-items:flex-start;">
+        const st=statusMangueira(m);
+        return `<div class="tag st-${st.status}" data-mang="${m.id}" style="cursor:pointer;align-items:flex-start;">
           <div class="tag-hole"></div><div class="tag-main">
             <div class="tag-code">${m.codigo} <span class="badge-type">${m.tipo}</span></div>
             <div class="tag-name">${local?local.nome:'Sem local'}</div>
-            <div class="tag-meta"><span>${m.metragem} m</span><span>${m.pontoInstalacao||'Sem ponto informado'}</span></div>
+            <div class="tag-meta"><span>${m.metragem} m</span><span>${m.pontoInstalacao||'Sem ponto informado'}</span><span>${st.label}${st.proxima?' · '+fmtDate(st.proxima):''}</span></div>
+          </div>
+          <div class="tag-status">${STATUS_LABEL[st.status]}</div>
           </div>
           <div class="tag-actions"><button class="btn btn-line btn-sm act-edit">${ICONS.edit}</button><button class="btn btn-danger btn-sm act-del">${ICONS.trash}</button></div>
         </div>`;
