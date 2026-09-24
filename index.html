@@ -200,11 +200,29 @@ nav.mainnav{display:flex;flex-direction:column;gap:2px;margin-top:6px;}
 .printtag .pt-name{font-size:10.5px;color:var(--ink-soft);margin-top:1px;}
 .printtag .pt-org{font-size:9px;color:var(--ink-faint);margin-top:5px;letter-spacing:.03em;}
 
+.report-table{width:100%;border-collapse:collapse;font-size:12px;}
+.report-table th{background:var(--primary);color:#fff;text-align:left;padding:8px 7px;font-weight:600;}
+.report-table td{border-bottom:1px solid var(--line);padding:8px 7px;vertical-align:top;}
+.report-table tr:last-child td{border-bottom:none;}
+.report-status{font-weight:700;font-size:10.5px;padding:3px 7px;border-radius:12px;display:inline-block;margin-left:5px;}
+.report-status.danger{background:var(--danger);color:#fff;}
+.report-status.warn{background:var(--warn-bg);color:var(--warn);}
+.report-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
+.report-summary .box{border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:#fff;}
+.report-summary .num{font-family:var(--font-mono);font-size:20px;font-weight:700;}
+.report-summary .lbl{font-size:11px;color:var(--ink-soft);margin-top:2px;}
+@media(max-width:760px){.report-table{font-size:10.5px;}.report-table th,.report-table td{padding:6px 4px;}.report-summary{grid-template-columns:1fr 1fr;}}
+
 @media print{
   #sidebar,#topbar,#bottomnav,.no-print{display:none !important;}
   #content{padding:0;max-width:none;}
   body{background:#fff;}
   .printtag{break-inside:avoid;}
+  .report-table{font-size:10px;}
+  .report-table th{background:#1A2B4E !important;color:#fff !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .report-status{border:1px solid #999;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .report-head{margin-bottom:14px;}
+  .report-table tr{break-inside:avoid;}
 }
 
 /* scanner */
@@ -857,6 +875,7 @@ const NAVITEMS = [
   {v:'inspecao', label:'Inspeção', icon:ICONS.insp},
   {v:'qrcodes', label:'QR Codes', icon:ICONS.qr},
   {v:'historico', label:'Histórico', icon:ICONS.hist},
+  {v:'relatorio', label:'Relatório', icon:ICONS.print},
 ];
 function pendenciasCount(){
   return DB.extintores.filter(e=>statusGeral(e)!=='ok').length;
@@ -1588,6 +1607,76 @@ function renderHistoricoGeral(){
   `;
 }
 
+/* ================= RELATÓRIO DE MANUTENÇÃO ANUAL ================= */
+function renderRelatorioManutencao(){
+  // Somente a manutenção anual determina a inclusão no relatório.
+  // O teste hidrostático é exibido apenas como informação.
+  const rows = DB.extintores.map(e=>{
+    const sA = statusAnual(e);
+    return {e, sA};
+  }).filter(x=>x.sA.status==='danger' || x.sA.status==='warn')
+    .sort((a,b)=>(a.sA.dias??-9999)-(b.sA.dias??-9999));
+
+  const vencidos = rows.filter(r=>r.sA.status==='danger').length;
+  const proximos = rows.filter(r=>r.sA.status==='warn').length;
+
+  document.getElementById('content').innerHTML = `
+    <div class="page-head report-head">
+      <div>
+        <div class="eyebrow">Relatório</div>
+        <h1>Manutenção anual</h1>
+        <div class="sub">Vencidos e com vencimento nos próximos 30 dias · gerado em ${fmtDate(todayISO())}</div>
+      </div>
+      <button class="btn btn-primary no-print" id="btn-export-pdf">${ICONS.print}Exportar PDF</button>
+    </div>
+
+    <div class="report-summary">
+      <div class="box"><div class="num">${rows.length}</div><div class="lbl">Equipamentos no relatório</div></div>
+      <div class="box"><div class="num">${vencidos}</div><div class="lbl">Manutenção anual vencida</div></div>
+      <div class="box"><div class="num">${proximos}</div><div class="lbl">Vencendo em até 30 dias</div></div>
+    </div>
+
+    <div class="panel">
+      ${rows.length===0 ? emptyState('Nenhum extintor com manutenção anual vencida ou vencendo nos próximos 30 dias.', ICONS.insp) : `
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>Local</th>
+              <th>Ponto de instalação</th>
+              <th>Tipo</th>
+              <th>Capacidade</th>
+              <th>Manutenção Anual</th>
+              <th>Teste Hidrostático</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map(r=>{
+              const e=r.e, s=r.sA;
+              const local=DB.locais.find(l=>l.id===e.localId);
+              const situacao = s.status==='danger'
+                ? `<span class="report-status danger">VENCIDA</span>`
+                : `<span class="report-status warn">VENCE EM ${s.dias} DIA${s.dias===1?'':'S'}</span>`;
+              return `<tr>
+                <td>${local?local.nome:'Sem local'}</td>
+                <td>${e.pontoInstalacao||'—'}</td>
+                <td>${TIPOS[e.tipo]?.label||e.tipo||'—'}</td>
+                <td>${e.capacidade||'—'}</td>
+                <td>${fmtDate(e.dataUltimaRecargaAnual||e.dataCadastro)}${situacao}</td>
+                <td>${fmtDate(e.dataUltimoHidrostatico)}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>`}
+    </div>
+
+    <div style="font-size:11px;color:var(--ink-faint);margin-top:10px;line-height:1.5;">
+      <b>Critério do relatório:</b> somente a data da manutenção anual é utilizada para determinar vencimento ou proximidade do vencimento. A data do teste hidrostático é apresentada exclusivamente como informação.
+    </div>
+  `;
+
+  document.getElementById('btn-export-pdf').onclick=()=>window.print();
+}
+
 /* ================= RELATÓRIO POR STATUS (Atenção / Vencidos) ================= */
 function renderRelatorioStatus(status){
   const isDanger = status==='danger';
@@ -1656,6 +1745,7 @@ function render(){
     case 'inspecao': renderInspecaoHub(); break;
     case 'inspecao-form': renderInspecaoForm(ROUTE.id); break;
     case 'historico': renderHistoricoGeral(); break;
+    case 'relatorio': renderRelatorioManutencao(); break;
     case 'relatorio-status': renderRelatorioStatus(ROUTE.status); break;
     default: renderDashboard();
   }
