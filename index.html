@@ -14,7 +14,7 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 <style>
 /* ============ TOKENS ============
-   Identidade visual baseada no site da Timbro Trading (timbrotrading.com):
+   Identidade visual do aplicativo Pânico Zer0:
    azul-marinho #1A2B4E como base sóbria, magenta #D6094D como cor de
    destaque exclusiva. Fundo off-white, tipografia limpa. */
 :root{
@@ -570,14 +570,14 @@ function testStorage(){
 }
 const STORAGE_OK = testStorage();
 
-function dbEmpty(){ return {locais:[], extintores:[], mangueiras:[], inspecoes:[], inspecoesMangueiras:[], seq:0, mangueiraSeq:0, org:'TIMBRO TRADING S.A.'}; }
+function dbEmpty(){ return {locais:[], extintores:[], mangueiras:[], inspecoes:[], inspecoesMangueiras:[], seq:0, mangueiraSeq:0, org:'Pânico Zer0'}; }
 
 function loadDBLocal(){
   try{ const r=localStorage.getItem(DB_KEY); if(r) return JSON.parse(r); }catch(e){}
   return dbEmpty();
 }
 let DB = loadDBLocal();
-if(!DB.org || DB.org==='FIBRASA S.A.') DB.org='TIMBRO TRADING S.A.';
+DB.org='Pânico Zer0';
 
 function saveDBLocal(){
   try{ localStorage.setItem(DB_KEY, JSON.stringify(DB)); }catch(e){}
@@ -637,8 +637,10 @@ async function syncFromSupabase(){
     DB.seq = seqRow ? parseInt(seqRow.valor)||0 : 0;
     const mangSeqRow = cfgs.find(c=>c.chave==='mangueira_seq');
     DB.mangueiraSeq = mangSeqRow ? parseInt(mangSeqRow.valor)||0 : 0;
-    const orgRow = cfgs.find(c=>c.chave==='org');
-    DB.org = orgRow ? orgRow.valor : 'TIMBRO TRADING S.A.';
+    DB.org = 'Pânico Zer0';
+    try{ await supaPatch('configuracoes',{valor:'Pânico Zer0'},'chave=eq.org'); }catch(e){
+      try{ await supaPost('configuracoes',{chave:'org',valor:'Pânico Zer0'}); }catch(e2){}
+    }
     saveDBLocal();
     hideSyncStatus();
     return true;
