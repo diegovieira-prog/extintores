@@ -303,6 +303,19 @@ const TIPOS = {
   ESPUMA:{label:'Espuma Mecânica (AFFF)', manometro:false},
 };
 
+// Ordenação padrão das opções exibidas ao usuário.
+// Usa português do Brasil e ignora maiúsculas/minúsculas/acentos para
+// manter a ordem alfabética de forma consistente, inclusive nos próximos cadastros.
+function compararAlfabetico(a,b){
+  return String(a||'').localeCompare(String(b||''),'pt-BR',{sensitivity:'base',numeric:true});
+}
+function locaisOrdenados(){
+  return [...(DB.locais||[])].sort((a,b)=>compararAlfabetico(a.nome,b.nome));
+}
+function tiposOrdenados(){
+  return Object.entries(TIPOS).sort(([,a],[,b])=>compararAlfabetico(a.label,b.label));
+}
+
 // Labels base dos itens — o bico tem label condicional por tipo (ver getItemLabel)
 const ITEM_LABELS = {
   lacre:    'Lacre',
@@ -1129,7 +1142,7 @@ function bindTagClicks(){
 
 /* ================= LOCAIS ================= */
 function renderLocais(){
-  const locais = DB.locais;
+  const locais = locaisOrdenados();
   document.getElementById('content').innerHTML = `
     <div class="page-head">
       <div><div class="eyebrow">Cadastro</div><h1>Locais</h1><div class="sub">Setores, áreas ou edificações onde os extintores estão instalados.</div></div>
@@ -1238,7 +1251,7 @@ function openMangueiraForm(existing){
   const isEdit=!!existing, root=document.getElementById('modalroot');
   root.innerHTML=`<div class="modal-overlay" id="ovl"><div class="modal" style="max-width:620px;">
     <h3>${isEdit?'Editar mangueira':'Nova mangueira'}</h3>
-    <div class="field"><label>Local</label><select id="mf-local"><option value="">Selecione...</option>${DB.locais.map(l=>`<option value="${l.id}" ${existing&&existing.localId===l.id?'selected':''}>${l.nome}</option>`).join('')}</select></div>
+    <div class="field"><label>Local</label><select id="mf-local"><option value="">Selecione...</option>${locaisOrdenados().map(l=>`<option value="${l.id}" ${existing&&existing.localId===l.id?'selected':''}>${l.nome}</option>`).join('')}</select></div>
     <div class="grid2"><div class="field"><label>Tipo</label><select id="mf-tipo"><option value="1½" ${existing?.tipo==='1½'?'selected':''}>1½"</option><option value="2½" ${existing?.tipo==='2½'?'selected':''}>2½"</option></select></div>
     <div class="field"><label>Metragem</label><select id="mf-metragem">${['15','20','25','30'].map(v=>`<option value="${v}" ${existing?.metragem===v?'selected':''}>${v} m</option>`).join('')}</select></div></div>
     <div class="grid2"><div class="field"><label>Último teste hidrostático</label><input type="date" id="mf-teste" value="${existing?.dataUltimoTeste||''}"></div>
@@ -1305,10 +1318,10 @@ function renderExtintorForm(existing){
     <div class="panel">
       <div class="grid2">
         <div class="field"><label>Local</label>
-          <select id="f-local">${DB.locais.map(l=>`<option value="${l.id}" ${existing&&existing.localId===l.id?'selected':''}>${l.nome}</option>`).join('')}</select>
+          <select id="f-local">${locaisOrdenados().map(l=>`<option value="${l.id}" ${existing&&existing.localId===l.id?'selected':''}>${l.nome}</option>`).join('')}</select>
         </div>
         <div class="field"><label>Tipo de agente extintor</label>
-          <select id="f-tipo">${Object.entries(TIPOS).map(([k,v])=>`<option value="${k}" ${existing&&existing.tipo===k?'selected':''}>${v.label}</option>`).join('')}</select>
+          <select id="f-tipo">${tiposOrdenados().map(([k,v])=>`<option value="${k}" ${existing&&existing.tipo===k?'selected':''}>${v.label}</option>`).join('')}</select>
         </div>
       </div>
       <div class="field">
@@ -1490,7 +1503,7 @@ function renderQRCodesPage(){
       <div style="display:flex;gap:8px;align-items:center;">
         <select id="f-filtro-local">
           <option value="">Todos os locais</option>
-          ${DB.locais.map(l=>`<option value="${l.id}" ${filtroLocal===l.id?'selected':''}>${l.nome}</option>`).join('')}
+          ${locaisOrdenados().map(l=>`<option value="${l.id}" ${filtroLocal===l.id?'selected':''}>${l.nome}</option>`).join('')}
         </select>
         <button class="btn btn-primary" id="btn-print-all">${ICONS.print}Imprimir</button>
       </div>
@@ -1668,8 +1681,8 @@ function renderInspecaoForm(id){
             <div class="field">
               <label>Tipo de inspeção</label>
               <select id="f-tipovisual">
-                <option value="mensal" ${state.tipoVisual==='mensal'?'selected':''}>Mensal (visual)</option>
                 <option value="anual"  ${state.tipoVisual==='anual' ?'selected':''}>Anual (manutenção)</option>
+                <option value="mensal" ${state.tipoVisual==='mensal'?'selected':''}>Mensal (visual)</option>
               </select>
             </div>
             <div class="field"><label>Data da inspeção</label><input type="date" id="f-data" value="${state.data}"></div>
